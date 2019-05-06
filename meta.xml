@@ -1,0 +1,6 @@
+<meta>
+    <script src="clientscript.lua" type="client" />
+    <file src="clientshader.fx" type="client" />
+	<file src="mta-helper.fx" type="client" />
+    <file src="hurry.png" type="client" />
+</meta>
