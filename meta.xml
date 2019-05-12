@@ -1,6 +1,9 @@
 <meta>
+<oop>true</oop>
+	<script src="matrix.lua" type="client" />
     <script src="clientscript.lua" type="client" />
-    <file src="clientshader.fx" type="client" />
-	<file src="mta-helper.fx" type="client" />
-    <file src="hurry.png" type="client" />
+	<script src="radar.lua" type="client" />
+    <file src="fx/clientshader.fx" type="client" />
+	<file src="fx/mta-helper.fx" type="client" />
+	<file src="fx/texturereplace.fx" type="client" />
 </meta>
