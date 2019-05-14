@@ -209,17 +209,21 @@ function getViewMatrix()
 	local fwVec = matrix{cameraMatrix[2][1],cameraMatrix[2][2],cameraMatrix[2][3]}
 	local upVec = matrix{cameraMatrix[3][1],cameraMatrix[3][2],cameraMatrix[3][3]}
 
-    zaxis = fwVec / matrix.len(fwVec)   -- The "forward" vector.
+	fwVec = fwVec - pos
+	fwLen = matrix.len(fwVec)
+    zaxis = fwVec / fwLen   -- The "forward" vector.
 	temp_xaxis = matrix.cross( upVec, zaxis )
-    xaxis = temp_xaxis / matrix.len(temp_xaxis)-- The "right" vector.
+	temp_xaxis_len = matrix.len(temp_xaxis)
+    xaxis = temp_xaxis / temp_xaxis_len-- The "right" vector.
 		
     yaxis = matrix.cross( zaxis, xaxis )-- The "up" vector.
+
     -- Create a 4x4 view matrix from the right, up, forward and eye position vectors
     viewMatrix = matrix{
-        {      xaxis[1][1],            yaxis[1][1],            zaxis[1][1],       -matrix.mul(xaxis, pos)[1][1] },
-        {      xaxis[2][1],            yaxis[2][1],            zaxis[2][1],       -matrix.mul(yaxis, pos)[1][1] },
-        {      xaxis[3][1],            yaxis[3][1],            zaxis[3][1],       -matrix.mul(zaxis, pos)[1][1] },
-        {0, 0, 0,  1 }
+        {      xaxis[1][1],            yaxis[1][1],            zaxis[1][1],       0 },
+        {      xaxis[2][1],            yaxis[2][1],            zaxis[2][1],       0 },
+        {      xaxis[3][1],            yaxis[3][1],            zaxis[3][1],       0 },
+        {-matrix.scalar(xaxis,pos), -matrix.scalar(yaxis,pos), -matrix.scalar(zaxis,pos),  1 }
     }
 	
     return viewMatrix;
@@ -227,6 +231,23 @@ end
 
 function getInverseProjectionMatrix()
 	return matrix.invert(getProjectionMatrix())
+end
+
+function getScreenFromWorldCoordinates(x,y,z)
+	local worldPos = matrix{{x,y,z,1}}
+	local projection = matrix.copy(getProjectionMatrix())
+	local view = matrix.copy(getViewMatrix())
+	
+	local posWorldView = matrix.mul(worldPos,view)
+	local position = matrix.mul(posWorldView, projection)
+	
+	--position[1][1] = position[1][1] / position[1][3]
+	--position[1][2] = position[1][2] / position[1][3]
+	
+	--position[1][1] = (position[1][1] + 1) * screen_x / 2
+	--position[1][2] = (position[1][2] + 1) * screen_y / 2
+	--outputChatBox(tostring(position))
+	return position[1][1], position[1][2]
 end
 
 function getWorldFromPosition(x,y, worldZ)
