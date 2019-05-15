@@ -194,11 +194,13 @@ end
 
 function getProjectionMatrix()
 	K = matrix{
-		{2.0 / screen_y * uZoom,0,0,0},
+		{2.0 / screen_y,0,0,0},
 		{0,2.0 / screen_x * uZoom,0,0},
 		{0,0,1.0 / (uFarClip - uNearClip), -uNearClip/(uFarClip-uNearClip)},
 		{0,0,0,1}
 	}
+	
+	dxSetShaderValue( viewShader, "uValueToCheck", K[1][1])
 	return K
 end
 
@@ -208,14 +210,14 @@ function getViewMatrix()
 	local pos = matrix{cameraMatrix[4][1],cameraMatrix[4][2],cameraMatrix[4][3]}
 	local fwVec = matrix{cameraMatrix[2][1],cameraMatrix[2][2],cameraMatrix[2][3]}
 	local upVec = matrix{cameraMatrix[3][1],cameraMatrix[3][2],cameraMatrix[3][3]}
-
-	fwVec = fwVec - pos
-	fwLen = matrix.len(fwVec)
-    zaxis = fwVec / fwLen   -- The "forward" vector.
-	temp_xaxis = matrix.cross( upVec, zaxis )
-	temp_xaxis_len = matrix.len(temp_xaxis)
-    xaxis = temp_xaxis / temp_xaxis_len-- The "right" vector.
-		
+	
+	--fwVec = fwVec - pos
+	--fwLen = matrix.len(fwVec)
+    zaxis = fwVec    -- The "forward" vector.
+	temp_xaxis = matrix.cross( upVec, fwVec )
+	--temp_xaxis_len = matrix.len(temp_xaxis)
+    --xaxis = temp_xaxis / temp_xaxis_len-- The "right" vector.
+	xaxis = temp_xaxis
     yaxis = matrix.cross( zaxis, xaxis )-- The "up" vector.
 
     -- Create a 4x4 view matrix from the right, up, forward and eye position vectors
@@ -241,12 +243,11 @@ function getScreenFromWorldCoordinates(x,y,z)
 	local posWorldView = matrix.mul(worldPos,view)
 	local position = matrix.mul(posWorldView, projection)
 	
-	--position[1][1] = position[1][1] / position[1][3]
-	--position[1][2] = position[1][2] / position[1][3]
+	position[1][1] = position[1][1] / position[1][4]
+	position[1][2] = position[1][2] / position[1][4]
 	
-	--position[1][1] = (position[1][1] + 1) * screen_x / 2
-	--position[1][2] = (position[1][2] + 1) * screen_y / 2
-	--outputChatBox(tostring(position))
+	position[1][1] = (position[1][1] + 1) * screen_x / 2
+	position[1][2] = (position[1][2] + 1) * screen_y / 2
 	return position[1][1], position[1][2]
 end
 

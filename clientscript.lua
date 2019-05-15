@@ -31,11 +31,11 @@ addEventHandler( "onClientRender", root,
 		--dxDrawText(string.format("x: %.2f\ny: %.2f\nz: %.2f", c_x, c_y, c_z),scx / 2, scy / 2)
 		
 		local x,y,z = getElementPosition(getLocalPlayer())
-		setElementPosition(obj_left, x + 10, y ,5)
-		setElementPosition(obj_right, x - 10, y ,5)
+		setElementPosition(obj_left, x + 50, y ,1)
+		setElementPosition(obj_right, x - 50, y ,1)
 		
-		local scr_x, scr_y = getScreenFromWorldCoordinates(x + 50,y,10)
-		local scr_x_r, scr_y_r = getScreenFromWorldCoordinates(x - 50,y,10)
+		local scr_x, scr_y = getScreenFromWorldCoordinates(x + 50,y,2)
+		local scr_x_r, scr_y_r = getScreenFromWorldCoordinates(x - 50,y,2)
 		dxDrawLine(scr_x, scr_y, scr_x_r, scr_y_r)
 		dxDrawText(string.format("x: %.2f\ny: %.2f", scr_x, scr_y),500, 100)
 		dxDrawText(string.format("x: %.2f\ny: %.2f", scr_x_r, scr_y_r),600, 100)
