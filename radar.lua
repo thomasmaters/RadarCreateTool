@@ -4,6 +4,7 @@ local timer
 local enabled = true
 
 local ROW_COUNT = 12
+local CALIBRATION_OFFSET = 100
 
 viewShader = nil;
 
@@ -38,16 +39,16 @@ end
 function setupEnvironment()
 	--setCameraTarget(getLocalPlayer())
 	setCloudsEnabled(false)
-	setFogDistance(10000)
-	setFarClipDistance(10000)
+	setFogDistance(1000)
+	setFarClipDistance(1000)
 	setHeatHaze(0)
 	
 	viewShader,tecName = dxCreateShader( "fx/clientshader.fx", 0,0,false,"all")
 	engineApplyShaderToWorldTexture ( viewShader, "*" )
 	
 	local scx, scy = guiGetScreenSize()
-	dxSetShaderValue( viewShader, "uScreenHeight", scx)
-	dxSetShaderValue( viewShader, "uScreenWidth", scy)
+	dxSetShaderValue( viewShader, "uScreenHeight", scy)
+	dxSetShaderValue( viewShader, "uScreenWidth", scx)
 	
 	if viewShader then
 		outputChatBox( "Shader using techinque " .. tecName )
@@ -55,7 +56,7 @@ function setupEnvironment()
 		outputChatBox( "Problem - use: debugscript 3" )
 	end
 	createUI()
-	increaseObjectRenderDistance()
+	--increaseObjectRenderDistance()
 end
 
 function createUI()
@@ -173,7 +174,7 @@ function createUI()
 			dxSetShaderValue( viewShader, "uZoom", uZoom)
 			outputChatBox(uZoom)
 		elseif(source == nearScroll) then
-			uNearClip = map(guiScrollBarGetScrollPosition(source), 0, 100, -20, 0)
+			uNearClip = map(guiScrollBarGetScrollPosition(source), 0, 100, -20, 1)
 			dxSetShaderValue( viewShader, "uNearClip", uNearClip)
 			outputChatBox(uNearClip)
 		elseif(source == farScroll) then
@@ -194,13 +195,11 @@ end
 
 function getProjectionMatrix()
 	K = matrix{
-		{2.0 / screen_y,0,0,0},
+		{0.6328 / screen_y * uZoom,0,0,0},
 		{0,2.0 / screen_x * uZoom,0,0},
 		{0,0,1.0 / (uFarClip - uNearClip), -uNearClip/(uFarClip-uNearClip)},
 		{0,0,0,1}
 	}
-	
-	dxSetShaderValue( viewShader, "uValueToCheck", K[1][1])
 	return K
 end
 
@@ -289,11 +288,13 @@ addEventHandler ( "onClientResourceStart", getResourceRootElement(getThisResourc
 
 function startMapMaking(x_step,y_step)
 	--How many pictures do we need to take?
-	local max_steps_x,max_steps_y = 3,3
+	local max_steps_x,max_steps_y = 10,10
 	
 	local screen_x, screen_y = guiGetScreenSize()
 	local x,y,z = getElementPosition(getLocalPlayer())
 	local cameraOffset = 200
+	
+	setElementFrozen(getLocalPlayer(),true)
 	
 	i,j = x,y
 	
@@ -302,18 +303,12 @@ function startMapMaking(x_step,y_step)
 	--Pixels to grab.
 	local x_pixels,y_pixels = 512 ,512
 	
-	--Positions in the world when we grab the pixels.
-	--[[local tl_x, tl_y, tl_z = getWorldFromScreenPosition ( screen_x / 2 - x_pixels / 2, screen_y / 2 - y_pixels / 2, cameraOffset )
-	local br_x, br_y, br_z = getWorldFromScreenPosition ( screen_x / 2 + x_pixels / 2, screen_y / 2 + y_pixels / 2, cameraOffset )
+	screen_picture = dxCreateScreenSource(screen_x  ,screen_y )	
+	main_image = dxCreateTexture(x_pixels * max_steps_x, y_pixels * max_steps_y)
+	current_b,current_l = 0,0
 	
-	x_step = tl_x - br_x
-	y_step = tl_y - br_y]]
-	
-		screen_picture = dxCreateScreenSource(screen_x  ,screen_y )	
-		main_image = dxCreateTexture(x_pixels * 2 * max_steps_x, y_pixels * 2 * max_steps_y)
-		current_b,current_l = 0,0
 		main_timer = setTimer(function()
-			
+			setElementPosition(getLocalPlayer(), i + current_b * x_step,j + current_l * y_step,cameraOffset + 5)
 			setCameraMatrix(i + current_b * x_step,j + current_l * y_step,cameraOffset,
 							i + current_b * x_step,j + current_l * y_step,0)
 			
@@ -341,47 +336,36 @@ function startMapMaking(x_step,y_step)
 					current_l = current_l + 1
 					current_b = 0
 				end
-			end,250,1)
-		end,500,1 * max_steps_x * max_steps_y + 1)
+			end,500,1)
+		end,1000,max_steps_x * max_steps_y + 1)
 		
 		setTimer(function()
 			local pixels_to_file = dxConvertPixels(dxGetTexturePixels(main_image),"jpeg")
 			fileWrite(new_radar_map_picture,pixels_to_file)
 			fileClose(new_radar_map_picture)
-		end, (1 * max_steps_x * max_steps_y) * 530 ,1)
+		end, (max_steps_x * max_steps_y) * 1100 ,1)
 end
 
 function syncCamera()
 	local x,y,z = getElementPosition(getLocalPlayer())
-	local screen_x, screen_y = guiGetScreenSize()
-	local x_pixels,y_pixels = 512 ,512
-	local cameraOffset = 200
-	setCameraMatrix(x,y,cameraOffset,
-					x,y,0)
-	local tl_x, tl_y, tl_z = getWorldFromScreenPosition ( screen_x / 2, screen_y / 2, cameraOffset )
-	local distance_x = 0
+	--Set lookat
+	setCameraMatrix(x,y,z,cameraOffset,x,y,0)
+	--Set rotation
+	setElementRotation(getCamera(),270,0,0)
 	
-	local function syncCameraX()
-		local br_x, br_y, br_z = getWorldFromScreenPosition ( screen_x / 2 - 500, screen_y / 2, cameraOffset )
-		outputChatBox(tostring(math.abs(br_x - tl_x)) .. " " .. tostring(distance_x))
-		if(tl_x < br_x) then
-			x = x - (tl_x - br_x) / 2
-			distance_x = distance_x - (tl_x - br_x) / 2
-			setCameraMatrix(x,y,cameraOffset,x,y,0)
-		elseif(tl_x > br_x) then
-			x = x + (tl_x - br_x) / 2
-			distance_x = distance_x + (tl_x - br_x) / 2
-			setCameraMatrix(x,y,cameraOffset,x,y,0)
-		end
-		if(math.abs(br_x - tl_x) < 0.1) then
-			removeEventHandler("onClientRender", getRootElement(), syncCameraX)
-		end
-	end
-	addEventHandler("onClientRender", getRootElement(), syncCameraX)
-	
-	setTimer(function()
-		startMapMaking(distance_x * uZoom,distance_x * uZoom)
-	end,2000,1)
+	--Sleep 100ms to let mta catchup and render at least one frame before continuing.
+	setTimer(function() 
+		local x_tl, y_tl = getScreenFromWorldCoordinates(x + CALIBRATION_OFFSET,y + CALIBRATION_OFFSET,0)
+		local x_br, y_br = getScreenFromWorldCoordinates(x - CALIBRATION_OFFSET,y - CALIBRATION_OFFSET,0)
+		
+		local x_pixel_offset = math.abs(x_tl - x_br)
+		local y_pixel_offset = math.abs(y_tl - y_br)
+		
+		local x_pixels_world_unit = (2 * CALIBRATION_OFFSET) / x_pixel_offset
+		local y_pixels_world_unit = (2 * CALIBRATION_OFFSET) / y_pixel_offset
+		
+		startMapMaking(x_pixels_world_unit * 512, y_pixels_world_unit * 512)
+	end, 100,1)
 end
 
 function handleTileLoading ( )

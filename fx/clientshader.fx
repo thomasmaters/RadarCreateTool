@@ -14,7 +14,7 @@ float uSaturation = 1.0;
 
 float uValueToCheck = 1.0;
 
-float uTextureCompressDistance = 0.2;
+float uTextureCompressDistance = 0.1;
 
 #include "mta-helper.fx"
 matrix gProjectionMainScene : PROJECTION_MAIN_SCENE;
@@ -62,7 +62,7 @@ float4x4 createProjectionMatrix()
 {
     // Create a 4x4 projection matrix from given input
 	float4x4 K = {
-		float4(2.0 / uScreenHeight,0,0,0),
+		float4(0.6328 / uScreenHeight * uZoom,0,0,0),
 		float4(0,2.0 / uScreenWidth * uZoom,0,0),
 		float4(0,0,1.0 / (uFarClip - uNearClip), -uNearClip/(uFarClip-uNearClip)),
 		float4(0,0,0,1)
@@ -87,10 +87,6 @@ PSInput VertexShaderFunction(VSInput VS)
 
     // Calc GTA lighting for peds
     PS.Diffuse = VS.Diffuse;
-
-	if(abs(uValueToCheck / sProjection[0][0]) < 0.98 || abs(uValueToCheck / sProjection[0][0]) > 1.02){
-		PS.Diffuse = float4(255,0,0,0);
-	}
 	
     return PS;
 }
@@ -98,12 +94,6 @@ PSInput VertexShaderFunction(VSInput VS)
 float4 PixelShaderFunction(PSInput PS) : COLOR0
 {
 	float4 finalColor;
-	//if(abs(uValueToCheck / gView[2][0]) < 0.98 || abs(uValueToCheck / gView[2][0]) > 1.02){
-	//	return float4(255,0,0,0);
-	//}
-	//if(uValueToCheck < gView[2][0]){
-	//	return float4(255,0,0,0);
-	//}
 	
 	if(uEqualColor == true){
 	    finalColor = tex2D(Sampler0, float2(25,25));
