@@ -12,8 +12,6 @@ float uFarClip = 1000.0;
 float uNearClip = 0.1;
 float uSaturation = 1.0;
 
-float uValueToCheck = 1.0;
-
 float uTextureCompressDistance = 0.1;
 
 #include "mta-helper.fx"

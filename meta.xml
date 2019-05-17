@@ -1,6 +1,10 @@
 <meta>
 <oop>true</oop>
 	<script src="matrix.lua" type="client" />
+	<script src="inheritance.lua" type="client" />
+	<script src="c_main.lua" type="client" />
+	<script src="c_shader.lua" type="client" />
+	<script src="c_ui.lua" type="client" />
     <script src="clientscript.lua" type="client" />
 	<script src="radar.lua" type="client" />
     <file src="fx/clientshader.fx" type="client" />
