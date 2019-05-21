@@ -37,6 +37,11 @@ addEventHandler( "onClientRender", root,
 		dxDrawText(string.format("x: %.5f\ny: %.5f", math.abs(scr_x_r - scr_x), math.abs(scr_y_r - scr_y)),700, 100)
 		dxDrawText(string.format("x: %.2f\ny: %.2f\nz: %.2f", rot_x, rot_y, rot_z),500, 200)
 		dxDrawText(string.format("x: %.4f\ny: %.4f", x_pixels_world_unit, y_pixels_world_unit),500, 300)
+		
+		if(GlobalRadarCreate.outputTexture) then
+		  dxDrawImage(1000,100,500,500,GlobalRadarCreate.outputTexture)
+		end
+		
 		setElementRotation(getCamera(),270,0,0)
    end
 )

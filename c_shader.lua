@@ -63,14 +63,29 @@ end
 
 function ViewShader:toggleShader()
   if(self.shaderEnabled) then
-    engineRemoveShaderFromWorldTexture ( self.shader, "*" )
+    self:disableShader()
   else
+    self:enableShader()
+  end
+end
+
+function ViewShader:enableShader()
+  if(not self.shaderEnabled) then
     engineApplyShaderToWorldTexture ( self.shader, "*" )
-	dxSetShaderValue( self.shader, "uZoom", self.zoom)
+    dxSetShaderValue( self.shader, "uZoom", self.zoom)
     dxSetShaderValue( self.shader, "uFarClip", self.farClip)
     dxSetShaderValue( self.shader, "uNearClip", self.nearClip)
+    
+    self.shaderEnabled = true
   end
-  self.shaderEnabled = not self.shaderEnabled
+end
+
+function ViewShader:disableShader()
+  if(self.shaderEnabled) then
+    engineRemoveShaderFromWorldTexture ( self.shader, "*" )
+    
+    self.shaderEnabled = false
+  end
 end
 
 function ViewShader:isShaderEnabled()

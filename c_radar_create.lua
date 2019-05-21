@@ -14,10 +14,27 @@ function RadarCreate:init()
   outputChatBox("SCREEN CAP SIZE: "..SCREEN_CAPTURE_SIZE)
   self.bottomLeftCoordinate = Vector3()
   self.topRightCoordinate = Vector3()
+  self.outputTexture = nil
+end
+
+function RadarCreate:isMapMaking()
+  if(self.mainTimer ~= nil or self.subTimer ~= nil) then
+    return true
+  end
+  return false
+end
+
+function RadarCreate:calculateSteps(x_step, y_step)
+  local delta_x_world_units = math.abs(self.bottomLeftCoordinate.x - self.topRightCoordinate.x)
+  local delta_y_world_units = math.abs(self.bottomLeftCoordinate.y - self.topRightCoordinate.y)
+  
+  local x_columns = math.ceil(delta_x_world_units / x_step)
+  local y_rows = math.ceil(delta_y_world_units / y_step)
+  
+  return x_columns, y_rows
 end
 
 function RadarCreate:setCamera(aX, aY)
-  --TODO does this work?
   setElementPosition(getLocalPlayer(),aX,aY, CAMERA_OFFSET + 5)
   setCameraMatrix(aX, aY, CAMERA_OFFSET, aX, aY, 0)
   outputChatBox(aX .." ".. aY)
@@ -39,27 +56,19 @@ end
 function RadarCreate:startMapMaking(x_step,y_step)
 outputChatBox("xstep: " ..x_step.. " ystep: " ..y_step)
   --How many pictures do we need to take?
-  local max_steps_x,max_steps_y = 10,29
+  local max_steps_x,max_steps_y = self:calculateSteps(x_step, y_step)
   
-  local x,y,_ = getElementPosition(getLocalPlayer())
-  local start_x,start_y = x,y
-  
-  --Create output texture
-  new_radar_map_picture = fileCreate("gta_radar_"..getTickCount()..".jpeg")
+  local start_x,start_y,_ = getElementPosition(getLocalPlayer())
 
-  local main_image = dxCreateTexture(SCREEN_CAPTURE_SIZE * max_steps_x, SCREEN_CAPTURE_SIZE * max_steps_y)
+  --Create output texture
+  new_radar_map_file = fileCreate("gta_radar_"..getTickCount()..".jpeg")
+
+  self.outputTexture = dxCreateTexture(SCREEN_CAPTURE_SIZE * max_steps_x, SCREEN_CAPTURE_SIZE * max_steps_y)
   local current_b,current_l = 0,0
   
   self.mainTimer = Timer(function()
       --Set the players camera matrix looking down.
-	setElementPosition(getLocalPlayer(), start_x + current_b * x_step,start_y + current_l * y_step,200 + 5)
-	setCameraMatrix(start_x + current_b * x_step,start_y + current_l * y_step,200,
-					start_x + current_b * x_step,start_y + current_l * y_step,0)
-					
-	local cx, cy, cz, clx, cly, clz = getCameraMatrix () 
-	outputChatBox((start_x + current_b * x_step) .." ".. (start_y + current_l * y_step))
-	outputChatBox((cx) .." ".. (cy))
-      --self:setCamera(start_x + current_b * x_step,start_y + current_l * y_step)
+  self:setCamera(start_x + current_b * x_step,start_y + current_l * y_step)
       
       --Timer to let the world render a bit before grabbing the screen source.
       self.subTimer = setTimer(function()
@@ -74,13 +83,13 @@ outputChatBox("xstep: " ..x_step.. " ystep: " ..y_step)
         
         --TODO safe smaller textures if we want to.
         
-        --Kill it the loop if we didn't grab the pixels.
+        --Kill the loop if we didn't grab the pixels.
         if not screen_part then
           stopMapMaking()
         end
         
         --Set the pixels of the big texture.
-        dxSetTexturePixels(main_image,
+        dxSetTexturePixels(self.outputTexture,
           screen_part,
           current_b * SCREEN_CAPTURE_SIZE,
           (max_steps_y-current_l - 1) * SCREEN_CAPTURE_SIZE,
@@ -94,9 +103,9 @@ outputChatBox("xstep: " ..x_step.. " ystep: " ..y_step)
 		  
 		  outputChatBox(current_b .." ".. current_l)
 		  if (current_l == max_steps_y and current_b == max_steps_x) then
-			self:savePicture(main_image, new_radar_map_picture)
-			GlobalViewShader:toggleShader()
-			return
+  			self:savePicture(self.outputTexture, new_radar_map_file)
+  			GlobalViewShader:disableShader()
+  			return
 		  end
 		  
           current_b = 0
@@ -107,7 +116,7 @@ end
 
 function RadarCreate:savePicture(texture, file)
   if(file == nil) then
-	outputChatBox("No file specified")
+	  outputChatBox("No file specified")
     file = fileCreate("unnamed_image_"..getTickCount()..".jpeg")
   end
   local pixels_to_file = dxConvertPixels(dxGetTexturePixels(texture),"jpeg")
@@ -123,7 +132,6 @@ function RadarCreate:syncCamera()
   
   --Sleep 100ms to let mta catchup and render at least one frame before continuing.
   setTimer(function() 
-
     local x_pixels_world_unit, y_pixels_world_unit = self:getPixelsPerWorldUnit()
 	outputChatBox("Calib offset: " ..CALIBRATION_OFFSET.. " x_pixel: " ..(x_pixels_world_unit * SCREEN_CAPTURE_SIZE).. " y_pixel: " ..(y_pixels_world_unit * SCREEN_CAPTURE_SIZE))
 	

@@ -100,8 +100,15 @@ function UserInterface:init()
 	addEventHandler("onClientGUIClick", self.buttonStart, 
 	function(button) 
 	  if(button == "left") then
-		GlobalViewShader:toggleShader()
-		GlobalRadarCreate:syncCamera()
+  	  if(GlobalRadarCreate:isMapMaking()) then
+  	    self.buttonStart:setText("Create map")
+        GlobalViewShader:disableShader()
+        GlobalRadarCreate:stopMapMaking()
+  	  else
+        self.buttonStart:setText("Stop creating map")
+        GlobalViewShader:enableShader()
+        GlobalRadarCreate:syncCamera()
+  	  end
 	  end
 	end, 
 	false)
