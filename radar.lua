@@ -3,11 +3,6 @@ local timer
 local enabled = true
 
 local ROW_COUNT = 12
-local CALIBRATION_OFFSET = 100
-
-viewShader = nil;
-
-local screen_x, screen_y = guiGetScreenSize()
 
 function toggleCustomTiles ( )
   -- Toggle!

@@ -60,7 +60,7 @@ float4x4 createProjectionMatrix()
 {
     // Create a 4x4 projection matrix from given input
 	float4x4 K = {
-		float4(0.6328 / uScreenHeight * uZoom,0,0,0),
+		float4(0.63281273 / uScreenHeight * uZoom,0,0,0),
 		float4(0,2.0 / uScreenWidth * uZoom,0,0),
 		float4(0,0,1.0 / (uFarClip - uNearClip), -uNearClip/(uFarClip-uNearClip)),
 		float4(0,0,0,1)

@@ -1,5 +1,3 @@
-main_timer = nil
-
 function map(x, in_min, in_max, out_min, out_max) 
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 end
@@ -7,6 +5,8 @@ end
 SCREEN_WIDTH, SCREEN_HEIGHT = guiGetScreenSize()
 
 GlobalViewShader = ViewShader()
+GlobalRadarCreate = RadarCreate()
+GlobalUI = UserInterface()
 
 function main()
   --setCameraTarget(getLocalPlayer())
@@ -14,6 +14,6 @@ function main()
   setFogDistance(1000)
   setFarClipDistance(1000)
   setHeatHaze(0)
-  createUI()
 end
+addCommandHandler("shader", function() GlobalViewShader:toggleShader() end)
 addEventHandler ( "onClientResourceStart", getResourceRootElement(getThisResource()), main)
