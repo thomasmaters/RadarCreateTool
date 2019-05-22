@@ -3,6 +3,11 @@ local scx, scy = guiGetScreenSize()
 local obj_left = createObject(3877,0,0,0)
 local obj_right = createObject(3877,0,0,0)
 
+RADAR_PREVIEW_X = 1000
+RADAR_PREVIEW_Y = 100
+RADAR_PREVIEW_WIDTH = 500
+RADAR_PREVIEW_HEIGHT = 500
+
 addEventHandler( "onClientRender", root,
     function()
 		if(isCursorShowing ( )) then
@@ -39,7 +44,23 @@ addEventHandler( "onClientRender", root,
 		dxDrawText(string.format("x: %.4f\ny: %.4f", x_pixels_world_unit, y_pixels_world_unit),500, 300)
 		
 		if(GlobalRadarCreate.outputTexture) then
-		  dxDrawImage(1000,100,500,500,GlobalRadarCreate.outputTexture)
+		  dxDrawImage(RADAR_PREVIEW_X,RADAR_PREVIEW_Y,RADAR_PREVIEW_WIDTH,RADAR_PREVIEW_HEIGHT,GlobalRadarCreate.outputTexture)
+		  for i=0, GlobalRadarCreate.maxRows do
+		  	dxDrawLine(
+		  	 RADAR_PREVIEW_X, 
+		  	 RADAR_PREVIEW_Y + i * (RADAR_PREVIEW_HEIGHT / GlobalRadarCreate.maxRows), 
+		  	 RADAR_PREVIEW_X + RADAR_PREVIEW_WIDTH, 
+		  	 RADAR_PREVIEW_Y + i * (RADAR_PREVIEW_HEIGHT / GlobalRadarCreate.maxRows)
+		  	)
+		  end
+      for i=0, GlobalRadarCreate.maxColumns do
+        dxDrawLine(
+         RADAR_PREVIEW_X + i * (RADAR_PREVIEW_WIDTH / GlobalRadarCreate.maxColumns),
+         RADAR_PREVIEW_Y, 
+         RADAR_PREVIEW_X + i * (RADAR_PREVIEW_WIDTH / GlobalRadarCreate.maxColumns), 
+         RADAR_PREVIEW_Y + RADAR_PREVIEW_HEIGHT
+        )
+      end
 		end
 		
 		setElementRotation(getCamera(),270,0,0)

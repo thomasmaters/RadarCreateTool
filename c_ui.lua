@@ -32,14 +32,14 @@ function UserInterface:init()
   guiCreateScrollBar( EDGE_OFFSET,  UI_START + 7 * TOTAL_ITEM_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,true,false,self.mainWindow)
   guiScrollBarSetScrollPosition(self.saturationScroll, map(SHADER_SATURATION_DEFAULT, SHADER_SATURATION_MIN, SHADER_SATURATION_MAX, 0, 100))
   
+  self.checkEnableShader = 
+    GuiCheckBox(  EDGE_OFFSET,  UI_START + 8 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Enable shader",false,false,self.mainWindow)
   self.checkLighting = 
-    GuiCheckBox(  EDGE_OFFSET,  UI_START + 8 * TOTAL_ITEM_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,"Lighting",true,false,self.mainWindow)
+    GuiCheckBox(  EDGE_OFFSET,  UI_START + 9 * TOTAL_ITEM_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,"Lighting",true,false,self.mainWindow)
   self.checkAverageTexColor = 
-    GuiCheckBox(  EDGE_OFFSET,  UI_START + 9 * TOTAL_ITEM_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,"Equal color (Might not work with textures with alpha)",false,false,self.mainWindow)
-  self.checkEdgeFade = 
-    GuiCheckBox(  EDGE_OFFSET,  UI_START + 10 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Fade radar edge to alpha",false,false,self.mainWindow)
+    GuiCheckBox(  EDGE_OFFSET,  UI_START + 10 * TOTAL_ITEM_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,"Equal color (Might not work with textures with alpha)",false,false,self.mainWindow)
   self.checkOneTexture =
-    GuiCheckBox(  EDGE_OFFSET,  UI_START + 11 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Output as one texture",false,false,self.mainWindow)
+    GuiCheckBox(  EDGE_OFFSET,  UI_START + 11 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Output radar parts",false,false,self.mainWindow)
   self.increaseObjectRenderDistance =
     GuiCheckBox(  EDGE_OFFSET,  UI_START + 12 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Increase object render distance(LOD's)",false,false,self.mainWindow)
   
@@ -52,18 +52,30 @@ function UserInterface:init()
   self.qualityComboBox:setSelected(0) --Select the first item.
   
       GuiLabel(EDGE_OFFSET_L ,  UI_START + 14 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Bottom-Left corner of map:",false,self.mainWindow)
-  self.buttonTopLeft = 
+  self.buttonBottomLeft = 
       GuiButton(  EDGE_OFFSET,  UI_START + 15 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Set to current position",false,self.mainWindow)
       GuiLabel(EDGE_OFFSET_L ,  UI_START + 16 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Top-Right corner of map:",false,self.mainWindow)
-  self.buttonBottomRight = 
+  self.buttonTopRight = 
       GuiButton(  EDGE_OFFSET,  UI_START + 17 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Set to current position",false,self.mainWindow)
   self.buttonStart = 
       GuiButton(  EDGE_OFFSET,  UI_START + 18 * TOTAL_ITEM_HEIGHT,  ITEM_WIDTH, ITEM_HEIGHT,"Create map",false,self.mainWindow)
 	  
+  addEventHandler("onClientGUIClick", self.checkEnableShader, 
+  function(button) 
+    if(button == "left") then
+      if(self.checkLighting:getSelected()) then
+        GlobalViewShader:enableShader()
+      else
+        GlobalViewShader:disableShader()
+      end
+    end
+  end, 
+  false)
+	  
 	addEventHandler("onClientGUIClick", self.checkLighting, 
 	function(button) 
 	  if(button == "left") then
-		GlobalViewShader:setLightingEnabled(self.checkLighting:getSelected())
+		  GlobalViewShader:setLightingEnabled(self.checkLighting:getSelected())
 	  end
 	end, 
 	false)
@@ -71,31 +83,54 @@ function UserInterface:init()
 	addEventHandler("onClientGUIClick", self.checkAverageTexColor, 
 	function(button) 
 	  if(button == "left") then
-		GlobalViewShader:setEqualColorEnabled(self.checkAverageTexColor:getSelected())
+		  GlobalViewShader:setEqualColorEnabled(self.checkAverageTexColor:getSelected())
 	  end
 	end, 
 	false)
 	
+  addEventHandler("onClientGUIClick", self.checkOneTexture, 
+  function(button) 
+    if(button == "left") then
+      if(self.checkOneTexture:getSelected()) then
+        GlobalRadarCreate:enableSavingRadarParts()
+      else
+        GlobalRadarCreate:disableSavingRadarParts()
+      end
+    end
+  end, 
+  false)
+	
 	addEventHandler("onClientGUIClick", self.increaseObjectRenderDistance, 
 	function(button) 
 	  if(button == "left") then
-		if(#GlobalViewShader.lodModels == 0) then
-			GlobalViewShader:increaseObjectRenderDistance()
-		else
-			GlobalViewShader:resetObjectRenderDistance()
-		end
+  		if(#GlobalViewShader.lodModels == 0) then
+  			GlobalViewShader:increaseObjectRenderDistance()
+  		else
+  			GlobalViewShader:resetObjectRenderDistance()
+  		end
 	  end
 	end, 
 	false)
 
-	addEventHandler("onClientGUIClick", self.buttonTopLeft, 
+	addEventHandler("onClientGUIClick", self.buttonBottomLeft, 
 	function(button) 
 	  if(button == "left") then
-		local x,y,z = getElementPosition(getLocalPlayer())    
-		self.buttonTopLeft:setText(string.format("x: %.2f y: %.2f z: %.2f", x,y,z))
+  		local x,y,z = getElementPosition(getLocalPlayer())    
+  		self.buttonBottomLeft:setText(string.format("x: %.2f y: %.2f z: %.2f", x,y,z))
+  		GlobalRadarCreate.bottomLeftCoordinate = Vector3(x,y,z)
 	  end
 	end, 
 	false)
+	
+  addEventHandler("onClientGUIClick", self.buttonTopRight, 
+  function(button) 
+    if(button == "left") then
+      local x,y,z = getElementPosition(getLocalPlayer())
+      self.buttonTopRight:setText(string.format("x: %.2f y: %.2f z: %.2f", x,y,z))
+      GlobalRadarCreate.topRightCoordinate = Vector3(x,y,z)
+    end
+  end, 
+  false)
 
 	addEventHandler("onClientGUIClick", self.buttonStart, 
 	function(button) 
@@ -113,19 +148,10 @@ function UserInterface:init()
 	end, 
 	false)
 
-	addEventHandler("onClientGUIClick", self.buttonBottomRight, 
-	function(button) 
-	  if(button == "left") then
-		local x,y,z = getElementPosition(getLocalPlayer())
-		self.buttonBottomRight:setText(string.format("x: %.2f y: %.2f z: %.2f", x,y,z))
-	  end
-	end, 
-	false)
-
 	addEventHandler ( "onClientGUIComboBoxAccepted", guiRoot,
 	  function ( comboBox )
 	  if(comboBox == self.qualityComboBox) then
-		local selectedIndex = self.qualityComboBox:getSelected()
+		  local selectedIndex = self.qualityComboBox:getSelected()
 	  end
 	end
 	)
@@ -143,4 +169,10 @@ function UserInterface:init()
 	  end
 	end
 	)
+end
+
+function UserInterface:mapMakingFinished()
+  self.buttonStart:setText("Create map")
+  GlobalViewShader:disableShader()
+  GlobalRadarCreate:stopMapMaking()
 end

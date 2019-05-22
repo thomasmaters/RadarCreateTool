@@ -29,19 +29,19 @@ function ViewShader:init()
   if self.shader then
     dxSetShaderValue( self.shader, "uScreenHeight", SCREEN_HEIGHT)
     dxSetShaderValue( self.shader, "uScreenWidth", SCREEN_WIDTH)
-	outputChatBox("Loaded shader with tec: " ..self.tec)
+    outputChatBox("Loaded shader with tec: " ..self.tec)
   else
-	outputChatBox("Could not load shader")
+    outputChatBox("Could not load shader")
     --TODO error?
   end
 end
-
+--TODO does this work or does it always set self.lighting to true?
 function ViewShader:setLightingEnabled(aValue)
-	self.ligthing = aValue
+	self.ligthing = aValue or true
 	dxSetShaderValue( self.shader, "uLighting", self.ligthing)
 end
 function ViewShader:setEqualColorEnabled(aValue)
-	self.equalColor = aValue
+	self.equalColor = aValue or true
 	dxSetShaderValue( self.shader, "uEqualColor", self.equalColor)
 end
 function ViewShader:setZoom(aValue) 
@@ -112,7 +112,7 @@ function ViewShader:getViewMatrix()
   -- The "forward" vector.
   local zaxis = fwVec 
   -- The left vector.
-  temp_xaxis = matrix.cross( upVec, fwVec )
+  local temp_xaxis = matrix.cross( upVec, fwVec )
 	--temp_xaxis_len = matrix.len(temp_xaxis)
     --xaxis = temp_xaxis / temp_xaxis_len-- The "right" vector.
   local xaxis = temp_xaxis
