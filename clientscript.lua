@@ -63,6 +63,6 @@ addEventHandler( "onClientRender", root,
       end
 		end
 		
-		setElementRotation(getCamera(),270,0,0)
+		--setElementRotation(getCamera(),270,0,0)
    end
 )

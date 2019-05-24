@@ -13,15 +13,15 @@ function RadarCreate:init()
   self.maxColumns = 0
   self.maxRows = 0
   self.screenSource = dxCreateScreenSource(SCREEN_WIDTH ,SCREEN_HEIGHT ) 
-  self.bottomLeftCoordinate = nil
-  self.topRightCoordinate = nil
+  self.bottomLeftCoordinate = Vector3()
+  self.topRightCoordinate = Vector3()
   self.outputTexture = nil
   self.saveRadarParts = false
   self.synchronised = false
   self.xPixelsPerWorldUnit = 0
   self.yPixelsPerWorldUnit = 0
   
-  addEventHandler("onClientRender",getRootElement(), self.drawInWorld)
+  --addEventHandler("onClientRender",getRootElement(), function() self:drawInWorld() end)
 end
 
 function RadarCreate:setBottomLeftCoordinate(x,y,z)
@@ -67,7 +67,7 @@ function RadarCreate:stopMapMaking()
 end
 
 function RadarCreate:startMapMaking()
-  removeEventHandler("onClientRender",getRootElement(), self.drawInWorld)
+  --removeEventHandler("onClientRender",getRootElement(), self.drawInWorld)
 
   --How many pictures do we need to take?
   self:calculateSteps()
@@ -75,7 +75,10 @@ function RadarCreate:startMapMaking()
   local start_x,start_y = self.bottomLeftCoordinate.x, self.bottomLeftCoordinate.y
 
   --Create output texture
-  self:createOutputTexture()
+  if not self:createOutputTexture() then
+	outputChatBox("Output texture not initialized.")
+	return
+  end
   local current_b,current_l = 0,0
   
   self.mainTimer = Timer(function()
@@ -107,13 +110,15 @@ function RadarCreate:startMapMaking()
 end
 
 function RadarCreate:mapMakingFinished()
-  addEventHandler("onClientRender",getRootElement(), self.drawInWorld)
+  --addEventHandler("onClientRender",getRootElement(), self.drawInWorld)
   --Update the UI.
   GlobalUI:mapMakingFinished() 
 end
 
 function RadarCreate:calculateSteps()
-  if(self.bottomLeftCoordinate == self.topRightCoordinate or self.xPixelsPerWorldUnit == 0 or self.yPixelsPerWorldUnit == 0) then
+  if(self.bottomLeftCoordinate == self.topRightCoordinate or 
+  self.xPixelsPerWorldUnit == 0 or 
+  self.yPixelsPerWorldUnit == 0) then
     return
   end
 
@@ -140,14 +145,17 @@ function RadarCreate:createOutputTexture()
     
       --Create a new texture.
       self.outputTexture = dxCreateTexture(SCREEN_CAPTURE_SIZE * self.maxColumns, SCREEN_CAPTURE_SIZE * self.maxRows)
+	  return true
     else
       --If size doesn't match, make a new texture.
       local texture_x, texture_y = self.outputTexture:getSize()
       if((self.maxColumns * SCREEN_CAPTURE_SIZE) ~= texture_x or (self.maxRows * SCREEN_CAPTURE_SIZE) ~= texture_y ) then
         self.outputTexture = dxCreateTexture(SCREEN_CAPTURE_SIZE * self.maxColumns, SCREEN_CAPTURE_SIZE * self.maxRows)
       end
+	  return true
     end
   end
+  return false
 end
 
 function RadarCreate:setCameraToGrid(current_b, current_l)

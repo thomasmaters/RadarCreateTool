@@ -37,12 +37,12 @@ function ViewShader:init()
 end
 
 function ViewShader:setLightingEnabled(aValue)
-  if(not aValue) then return end
+	if(aValue == nil) then return end
 	self.ligthing = aValue
 	dxSetShaderValue( self.shader, "uLighting", self.ligthing)
 end
 function ViewShader:setEqualColorEnabled(aValue)
-  if(not aValue) then return end
+	if(aValue == nil) then return end
 	self.equalColor = aValue
 	dxSetShaderValue( self.shader, "uEqualColor", self.equalColor)
 end
