@@ -13,12 +13,27 @@ function RadarCreate:init()
   self.maxColumns = 0
   self.maxRows = 0
   self.screenSource = dxCreateScreenSource(SCREEN_WIDTH ,SCREEN_HEIGHT ) 
-  self.bottomLeftCoordinate = Vector3()
-  self.topRightCoordinate = Vector3()
+  self.bottomLeftCoordinate = nil
+  self.topRightCoordinate = nil
   self.outputTexture = nil
   self.saveRadarParts = false
+  self.synchronised = false
+  self.xPixelsPerWorldUnit = 0
+  self.yPixelsPerWorldUnit = 0
   
   addEventHandler("onClientRender",getRootElement(), self.drawInWorld)
+end
+
+function RadarCreate:setBottomLeftCoordinate(x,y,z)
+  self.bottomLeftCoordinate = Vector3(x,y,z)
+  self.calculateSteps()
+  self:createOutputTexture()
+end
+
+function RadarCreate:setTopRightCoordinate(x,y,z)
+  self.topRightCoordinate = Vector3(x,y,z)
+  self.calculateSteps()
+  self:createOutputTexture()
 end
 
 function RadarCreate:enableSavingRadarParts()
@@ -51,11 +66,11 @@ function RadarCreate:stopMapMaking()
   end
 end
 
-function RadarCreate:startMapMaking(x_step,y_step)
+function RadarCreate:startMapMaking()
   removeEventHandler("onClientRender",getRootElement(), self.drawInWorld)
 
   --How many pictures do we need to take?
-  self.maxColumns,self.maxRows = self:calculateSteps(x_step, y_step)
+  self:calculateSteps()
   
   local start_x,start_y = self.bottomLeftCoordinate.x, self.bottomLeftCoordinate.y
 
@@ -65,7 +80,7 @@ function RadarCreate:startMapMaking(x_step,y_step)
   
   self.mainTimer = Timer(function()
     --Set the players camera matrix looking down.
-    self:setCameraToGrid(current_b, current_l, x_step, y_step)
+    self:setCameraToGrid(current_b, current_l)
         
     --Timer to let the world render a bit before grabbing the screen source.
     self.subTimer = setTimer(function()
@@ -97,43 +112,46 @@ function RadarCreate:mapMakingFinished()
   GlobalUI:mapMakingFinished() 
 end
 
-function RadarCreate:calculateSteps(x_step, y_step)
+function RadarCreate:calculateSteps()
+  if(self.bottomLeftCoordinate == self.topRightCoordinate or self.xPixelsPerWorldUnit == 0 or self.yPixelsPerWorldUnit == 0) then
+    return
+  end
+
+  local x_step,y_step = self.xPixelsPerWorldUnit * SCREEN_CAPTURE_SIZE, self.yPixelsPerWorldUnit * SCREEN_CAPTURE_SIZE
   local delta_x_world_units = math.abs(self.bottomLeftCoordinate.x - self.topRightCoordinate.x)
   local delta_y_world_units = math.abs(self.bottomLeftCoordinate.y - self.topRightCoordinate.y)
   
-  local x_columns = math.ceil(delta_x_world_units / x_step)
-  local y_rows = math.ceil(delta_y_world_units / y_step)
-  
-  return x_columns, y_rows
+  self.maxColumns = math.ceil(delta_x_world_units / x_step)
+  self.maxRows = math.ceil(delta_y_world_units / y_step)
 end
 
 function RadarCreate:setCamera(aX, aY)
   setElementPosition(getLocalPlayer(),aX,aY, CAMERA_OFFSET + 5)
   setCameraMatrix(aX, aY, CAMERA_OFFSET, aX, aY, 0)
-  outputChatBox(aX .." ".. aY)
-  
   setElementRotation(getCamera(),270, 0, 0)
 end
 
 --Create an ouput texture if we have don't have an output texture or the size of the output texture is not the same.
 function RadarCreate:createOutputTexture()
   if(self.maxRows > 0 and self.maxColumns > 0) then
+  
+    --Do we have a texture already?
     if(self.outputTexture == nil) then
+    
+      --Create a new texture.
       self.outputTexture = dxCreateTexture(SCREEN_CAPTURE_SIZE * self.maxColumns, SCREEN_CAPTURE_SIZE * self.maxRows)
     else
-      --Does size match?
+      --If size doesn't match, make a new texture.
       local texture_x, texture_y = self.outputTexture:getSize()
       if((self.maxColumns * SCREEN_CAPTURE_SIZE) ~= texture_x or (self.maxRows * SCREEN_CAPTURE_SIZE) ~= texture_y ) then
         self.outputTexture = dxCreateTexture(SCREEN_CAPTURE_SIZE * self.maxColumns, SCREEN_CAPTURE_SIZE * self.maxRows)
       end
     end
-  else
-    self:setCameraToGrid(0,0)
-    self:createOutputTexture()
   end
 end
 
-function RadarCreate:setCameraToGrid(current_b, current_l, x_step, y_step)
+function RadarCreate:setCameraToGrid(current_b, current_l)
+  local x_step,y_step = self.xPixelsPerWorldUnit * SCREEN_CAPTURE_SIZE, self.yPixelsPerWorldUnit * SCREEN_CAPTURE_SIZE
   local start_x,start_y = self.bottomLeftCoordinate.x, self.bottomLeftCoordinate.y
   
   --Do we have a valid input for the grid positions we want to visit.
@@ -194,10 +212,7 @@ function RadarCreate:syncCamera()
   
   --Sleep 100ms to let mta catchup and render at least one frame before continuing.
   setTimer(function() 
-    local x_pixels_world_unit, y_pixels_world_unit = self:getPixelsPerWorldUnit()
-	outputChatBox("Calib offset: " ..CALIBRATION_OFFSET.. " x_pixel: " ..(x_pixels_world_unit * SCREEN_CAPTURE_SIZE).. " y_pixel: " ..(y_pixels_world_unit * SCREEN_CAPTURE_SIZE))
-	
-    self:startMapMaking(x_pixels_world_unit * SCREEN_CAPTURE_SIZE, y_pixels_world_unit * SCREEN_CAPTURE_SIZE)
+    self.xPixelsPerWorldUnit, self.yPixelsPerWorldUnit = self:getPixelsPerWorldUnit()
   end, 100,1)
 end
 

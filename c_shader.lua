@@ -37,26 +37,32 @@ function ViewShader:init()
 end
 
 function ViewShader:setLightingEnabled(aValue)
+  if(not aValue) then return end
 	self.ligthing = aValue
 	dxSetShaderValue( self.shader, "uLighting", self.ligthing)
 end
 function ViewShader:setEqualColorEnabled(aValue)
+  if(not aValue) then return end
 	self.equalColor = aValue
 	dxSetShaderValue( self.shader, "uEqualColor", self.equalColor)
 end
 function ViewShader:setZoom(aValue) 
+  if(not aValue) then return end
   self.zoom = aValue
   dxSetShaderValue( self.shader, "uZoom", self.zoom)
 end
 function ViewShader:setFarClip(aValue) 
+  if(not aValue) then return end
   self.farClip = aValue 
   dxSetShaderValue( self.shader, "uFarClip", self.farClip)
 end
 function ViewShader:setNearClip(aValue) 
+  if(not aValue) then return end
   self.nearClip = aValue 
   dxSetShaderValue( self.shader, "uNearClip", self.nearClip)
 end
 function ViewShader:setSaturation(aValue)
+  if(not aValue) then return end
   self.saturation = aValue
   dxSetShaderValue( self.shader, "uSaturation", self.saturation)
 end
@@ -83,6 +89,7 @@ end
 function ViewShader:disableShader()
   if(self.shaderEnabled) then
     engineRemoveShaderFromWorldTexture ( self.shader, "*" )
+    setCameraTarget(getLocalPlayer())
     
     self.shaderEnabled = false
   end

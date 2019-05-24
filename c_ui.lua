@@ -117,7 +117,7 @@ function UserInterface:init()
 	  if(button == "left") then
   		local x,y,z = getElementPosition(getLocalPlayer())    
   		self.buttonBottomLeft:setText(string.format("x: %.2f y: %.2f z: %.2f", x,y,z))
-  		GlobalRadarCreate.bottomLeftCoordinate = Vector3(x,y,z)
+  		GlobalRadarCreate:setBottomLeftCoordinate(x,y,z)
 	  end
 	end, 
 	false)
@@ -127,7 +127,7 @@ function UserInterface:init()
     if(button == "left") then
       local x,y,z = getElementPosition(getLocalPlayer())
       self.buttonTopRight:setText(string.format("x: %.2f y: %.2f z: %.2f", x,y,z))
-      GlobalRadarCreate.topRightCoordinate = Vector3(x,y,z)
+      GlobalRadarCreate:setTopRightCoordinate(x,y,z)
     end
   end, 
   false)
@@ -159,20 +159,33 @@ function UserInterface:init()
 	--Scroll callback.
 	addEventHandler( "onClientGUIScroll", root, function()
 	  if(source == self.zoomScroll) then
-		GlobalViewShader:setZoom(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_ZOOM_MIN, SHADER_ZOOM_MAX))
+		  GlobalViewShader:setZoom(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_ZOOM_MIN, SHADER_ZOOM_MAX))
 	  elseif(source == self.nearScroll) then
-		GlobalViewShader:setNearClip(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_NEARCLIP_MIN, SHADER_NEARCLIP_MAX))
+		  GlobalViewShader:setNearClip(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_NEARCLIP_MIN, SHADER_NEARCLIP_MAX))
 	  elseif(source == self.farScroll) then
-		GlobalViewShader:setFarClip(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_FARCLIP_MIN, SHADER_FARCLIP_MAX))
+		  GlobalViewShader:setFarClip(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_FARCLIP_MIN, SHADER_FARCLIP_MAX))
 	  elseif(source == self.saturationScroll) then
-		GlobalViewShader:setSaturation(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_SATURATION_MIN, SHADER_SATURATION_MAX))
+		  GlobalViewShader:setSaturation(map(guiScrollBarGetScrollPosition(source), 0, 100, SHADER_SATURATION_MIN, SHADER_SATURATION_MAX))
 	  end
 	end
 	)
+	
+	self.mapX = 0
+	self.mapY = 0
+	
+	bindKey("arrow_l","down", function() self.mapX = self.mapX - 1 GlobalRadarCreate:setCameraToGrid(self.mapX, self.mapY) end)
+	bindKey("arrow_r","down", function() self.mapX = self.mapX + 1 GlobalRadarCreate:setCameraToGrid(self.mapX, self.mapY) end)
+	bindKey("arrow_u","down", function() self.mapY = self.mapY - 1 GlobalRadarCreate:setCameraToGrid(self.mapX, self.mapY) end)
+	bindKey("arrow_d","down", function() self.mapY = self.mapY + 1 GlobalRadarCreate:setCameraToGrid(self.mapX, self.mapY) end)
+	bindKey("enter","down", function() GlobalRadarCreate:grabScreenPixels(self.mapX, self.mapY) end)
 end
 
 function UserInterface:mapMakingFinished()
   self.buttonStart:setText("Create map")
   GlobalViewShader:disableShader()
   GlobalRadarCreate:stopMapMaking()
+  
+  --Set manual mapmaking grid coordinates back to 0.
+  self.mapX = 0
+  self.mapY = 0
 end
