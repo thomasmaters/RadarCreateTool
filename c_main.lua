@@ -14,6 +14,7 @@ function main()
   setFogDistance(1000)
   setFarClipDistance(1000)
   setHeatHaze(0)
+  GlobalRadarCreate:syncCamera()
 end
 addCommandHandler("shader", function() GlobalViewShader:toggleShader() end)
 addEventHandler ( "onClientResourceStart", getResourceRootElement(getThisResource()), main)
