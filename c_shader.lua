@@ -35,13 +35,13 @@ function ViewShader:init()
     --TODO error?
   end
 end
---TODO does this work or does it always set self.lighting to true?
+
 function ViewShader:setLightingEnabled(aValue)
-	self.ligthing = aValue or true
+	self.ligthing = aValue
 	dxSetShaderValue( self.shader, "uLighting", self.ligthing)
 end
 function ViewShader:setEqualColorEnabled(aValue)
-	self.equalColor = aValue or true
+	self.equalColor = aValue
 	dxSetShaderValue( self.shader, "uEqualColor", self.equalColor)
 end
 function ViewShader:setZoom(aValue) 
