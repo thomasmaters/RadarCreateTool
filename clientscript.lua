@@ -43,7 +43,7 @@ addEventHandler( "onClientRender", root,
 		dxDrawText(string.format("x: %.2f\ny: %.2f\nz: %.2f", rot_x, rot_y, rot_z),500, 200)
 		dxDrawText(string.format("x: %.4f\ny: %.4f", x_pixels_world_unit, y_pixels_world_unit),500, 300)
 		
-		if(GlobalRadarCreate.outputTexture) then
+		if(GlobalRadarCreate.outputTexture and GlobalRadarCreate.maxRows ~= 0 and GlobalRadarCreate.maxColumns ~= 0) then
 		  dxDrawImage(RADAR_PREVIEW_X,RADAR_PREVIEW_Y,RADAR_PREVIEW_WIDTH,RADAR_PREVIEW_HEIGHT,GlobalRadarCreate.outputTexture)
 		  for i=0, GlobalRadarCreate.maxRows do
 		  	dxDrawLine(
@@ -53,14 +53,14 @@ addEventHandler( "onClientRender", root,
 		  	 RADAR_PREVIEW_Y + i * (RADAR_PREVIEW_HEIGHT / GlobalRadarCreate.maxRows)
 		  	)
 		  end
-      for i=0, GlobalRadarCreate.maxColumns do
-        dxDrawLine(
-         RADAR_PREVIEW_X + i * (RADAR_PREVIEW_WIDTH / GlobalRadarCreate.maxColumns),
-         RADAR_PREVIEW_Y, 
-         RADAR_PREVIEW_X + i * (RADAR_PREVIEW_WIDTH / GlobalRadarCreate.maxColumns), 
-         RADAR_PREVIEW_Y + RADAR_PREVIEW_HEIGHT
-        )
-      end
+		  for i=0, GlobalRadarCreate.maxColumns do
+			dxDrawLine(
+			 RADAR_PREVIEW_X + i * (RADAR_PREVIEW_WIDTH / GlobalRadarCreate.maxColumns),
+			 RADAR_PREVIEW_Y, 
+			 RADAR_PREVIEW_X + i * (RADAR_PREVIEW_WIDTH / GlobalRadarCreate.maxColumns), 
+			 RADAR_PREVIEW_Y + RADAR_PREVIEW_HEIGHT
+			)
+		  end
 		end
 		
 		--setElementRotation(getCamera(),270,0,0)

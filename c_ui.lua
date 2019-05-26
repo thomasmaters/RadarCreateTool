@@ -135,16 +135,22 @@ function UserInterface:init()
 	addEventHandler("onClientGUIClick", self.buttonStart, 
 	function(button) 
 	  if(button == "left") then
-  	  if(GlobalRadarCreate:isMapMaking()) then
-  	    self.buttonStart:setText("Create map")
-        GlobalViewShader:disableShader()
-        GlobalRadarCreate:stopMapMaking()
-  	  else
-        self.buttonStart:setText("Stop creating map")
-        GlobalViewShader:enableShader()
-        GlobalRadarCreate:syncCamera()
-		setTimer(function() GlobalRadarCreate:startMapMaking() end, 150,1)
-  	  end
+		  if(GlobalRadarCreate:isMapMaking()) then
+			outputChatBox("Stopping map making")
+			self.buttonStart:setText("Create map")
+			GlobalViewShader:disableShader()
+			GlobalRadarCreate:stopMapMaking()
+		  else
+			self.buttonStart:setEnabled(false)
+			outputChatBox("Starting map making")
+			self.buttonStart:setText("Stop creating map")
+			GlobalViewShader:enableShader()
+			GlobalRadarCreate:syncCamera()
+			setTimer(function() 
+				GlobalRadarCreate:startMapMaking() 
+				self.buttonStart:setEnabled(true)
+			end, 150,1)
+		  end
 	  end
 	end, 
 	false)
@@ -183,6 +189,7 @@ end
 
 function UserInterface:mapMakingFinished()
   self.buttonStart:setText("Create map")
+  self.checkEnableShader:setSelected(false)
   GlobalViewShader:disableShader()
   GlobalRadarCreate:stopMapMaking()
   

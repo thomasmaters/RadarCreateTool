@@ -13,8 +13,8 @@ function RadarCreate:init()
   self.maxColumns = 0
   self.maxRows = 0
   self.screenSource = dxCreateScreenSource(SCREEN_WIDTH ,SCREEN_HEIGHT ) 
-  self.bottomLeftCoordinate = Vector3()
-  self.topRightCoordinate = Vector3()
+  self.bottomLeftCoordinate = nil
+  self.topRightCoordinate = nil
   self.outputTexture = nil
   self.saveRadarParts = false
   self.synchronised = false
@@ -26,13 +26,13 @@ end
 
 function RadarCreate:setBottomLeftCoordinate(x,y,z)
   self.bottomLeftCoordinate = Vector3(x,y,z)
-  self.calculateSteps()
+  self:calculateSteps()
   self:createOutputTexture()
 end
 
 function RadarCreate:setTopRightCoordinate(x,y,z)
   self.topRightCoordinate = Vector3(x,y,z)
-  self.calculateSteps()
+  self:calculateSteps()
   self:createOutputTexture()
 end
 
@@ -58,12 +58,12 @@ end
 function RadarCreate:stopMapMaking()
   if(isTimer(self.mainTimer)) then
     killTimer(self.mainTimer)
-    self.mainTimer = nil --Nil out timer to prevent timer id reuse bugs.
   end
   if(isTimer(self.subTimer)) then
     killTimer(self.subTimer) 
-    self.subTimer = nil --Nil out timer to prevent timer id reuse bugs.
   end
+  self.subTimer = nil --Nil out timer to prevent timer id reuse bugs.
+  self.mainTimer = nil --Nil out timer to prevent timer id reuse bugs.
 end
 
 function RadarCreate:startMapMaking()
@@ -116,7 +116,9 @@ function RadarCreate:mapMakingFinished()
 end
 
 function RadarCreate:calculateSteps()
-  if(self.bottomLeftCoordinate == self.topRightCoordinate or 
+  if( self.topRightCoordinate == nil or
+  self.bottomLeftCoordinate == nil or
+  self.bottomLeftCoordinate == self.topRightCoordinate or 
   self.xPixelsPerWorldUnit == 0 or 
   self.yPixelsPerWorldUnit == 0) then
     return
@@ -168,7 +170,7 @@ function RadarCreate:setCameraToGrid(current_b, current_l)
   end
   
   --Set the camera to that column and row
-  self:setCamera(start_x + current_b * x_step * SCREEN_CAPTURE_SIZE,start_y + current_l * y_step * SCREEN_CAPTURE_SIZE)
+  self:setCamera(start_x + current_b * x_step,start_y + current_l * y_step)
 end
 
 function RadarCreate:grabScreenPixels(current_b, current_l)
