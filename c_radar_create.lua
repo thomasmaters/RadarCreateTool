@@ -3,7 +3,7 @@ RadarCreate = newclass("RadarCreate")
 CAMERA_OFFSET = 200
 SCREEN_CAPTURE_SIZE = 512
 CALIBRATION_OFFSET = 100
-VISUALIZE_Z_OFFSET = 100
+VISUALIZE_Z_OFFSET = 300
 
 function RadarCreate:init()
   self.camera = getCamera()
@@ -21,7 +21,7 @@ function RadarCreate:init()
   self.xPixelsPerWorldUnit = 0
   self.yPixelsPerWorldUnit = 0
   
-  --addEventHandler("onClientRender",getRootElement(), function() self:drawInWorld() end)
+  addEventHandler("onClientRender",getRootElement(), function() self:drawInWorld() end)
 end
 
 function RadarCreate:setBottomLeftCoordinate(x,y,z)
@@ -110,7 +110,6 @@ function RadarCreate:startMapMaking()
 end
 
 function RadarCreate:mapMakingFinished()
-  --addEventHandler("onClientRender",getRootElement(), self.drawInWorld)
   --Update the UI.
   GlobalUI:mapMakingFinished() 
 end
@@ -227,6 +226,12 @@ function RadarCreate:syncCamera()
 end
 
 function RadarCreate:drawInWorld()
+	if(self.bottomLeftCoordinate == nil or
+		self.topRightCoordinate == nil or
+		self.maxColumns == 0 or
+		self.maxRows == 0) then
+		return
+	end
   local x_pixels_world_unit, y_pixels_world_unit = self:getPixelsPerWorldUnit()
   local x_step, y_step = x_pixels_world_unit * SCREEN_CAPTURE_SIZE, y_pixels_world_unit * SCREEN_CAPTURE_SIZE
   local _,_,z = getElementPosition(getLocalPlayer())
@@ -236,23 +241,23 @@ function RadarCreate:drawInWorld()
   for i=0, self.maxRows do
 	  for j=0, self.maxColumns do
 	    --TODO do we need to flip the i and the j in this loop?
-      local x = start_x + i * x_step * SCREEN_CAPTURE_SIZE 
-      local y = start_y + j * y_step * SCREEN_CAPTURE_SIZE
-      dxDrawLine3D(x, y, z - VISUALIZE_Z_OFFSET, x, y, z + VISUALIZE_Z_OFFSET)
+      local x = start_x + i * x_step 
+      local y = start_y + j * y_step
+      dxDrawLine3D(x, y, z - VISUALIZE_Z_OFFSET, x, y, z + VISUALIZE_Z_OFFSET, tocolor ( 0, 255, 0, 230 ), 500)
     end
   end
   
   --Draw horizontal lines.
-  for i=0, self.maxRows - 1 do
+  --[[for i=0, self.maxRows - 1 do
     for j=0, self.maxColumns - 1 do
       --TODO do we need to flip the i and the j in this loop?
-      local x1 = start_x + i * x_step * SCREEN_CAPTURE_SIZE 
-      local y1 = start_y + j * y_step * SCREEN_CAPTURE_SIZE
-      local x2 = start_x + (i + 1) * x_step * SCREEN_CAPTURE_SIZE 
-      local y2 = start_y + (j + 1) * y_step * SCREEN_CAPTURE_SIZE
-      dxDrawLine3D(x1, y1, z, x2, y2, z)
+      local x1 = start_x + i * x_step 
+      local y1 = start_y + j * y_step
+      local x2 = start_x + (i + 1) * x_step 
+      local y2 = start_y + (j + 1) * y_step
+      dxDrawLine3D(x1, y1, z - 20, x2, y2, z - 20, tocolor ( 255, 255, 0, 230 ), 30)
     end
-  end  
+  end  ]]
 end
 
 function RadarCreate:getPixelsPerWorldUnit()

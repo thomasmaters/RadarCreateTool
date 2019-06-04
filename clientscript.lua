@@ -66,3 +66,20 @@ addEventHandler( "onClientRender", root,
 		--setElementRotation(getCamera(),270,0,0)
    end
 )
+
+
+function test()
+	local radar = dxCreateTexture("sattelite_7_2.jpeg")
+	local shader, tec = dxCreateShader( "fx/radar_mask.fx", 0,0,false,"all")
+	if(shader) then
+	outputChatBox("Loaded test shader: " .. tec)
+		dxSetShaderValue( shader, "uCustomRadarTexturePart", radar)
+		dxSetShaderValue( shader, "uScreenWidth", scx)
+		dxSetShaderValue( shader, "uScreenHeight", scy)
+		engineApplyShaderToWorldTexture ( shader, "radardisc" )
+	else
+		outputChatBox("Could not load test shader")
+	end
+end
+
+addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource()), test)

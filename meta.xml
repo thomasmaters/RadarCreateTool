@@ -1,5 +1,6 @@
 <meta>
 <oop>true</oop>
+	<file src="sattelite_7_2.jpeg"/>
 	<script src="matrix.lua" type="client" />
 	<script src="inheritance.lua" type="client" />
 	<script src="c_shader.lua" type="client" />
@@ -11,4 +12,5 @@
     <file src="fx/clientshader.fx" type="client" />
 	<file src="fx/mta-helper.fx" type="client" />
 	<file src="fx/texturereplace.fx" type="client" />
+	<file src="fx/radar_mask.fx" type="client" />
 </meta>
