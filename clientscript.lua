@@ -69,17 +69,34 @@ addEventHandler( "onClientRender", root,
 
 
 function test()
-	local radar = dxCreateTexture("sattelite_7_2.jpeg")
-	local shader, tec = dxCreateShader( "fx/radar_mask.fx", 0,0,false,"all")
-	if(shader) then
-	outputChatBox("Loaded test shader: " .. tec)
-		dxSetShaderValue( shader, "uCustomRadarTexturePart", radar)
-		dxSetShaderValue( shader, "uScreenWidth", scx)
-		dxSetShaderValue( shader, "uScreenHeight", scy)
-		engineApplyShaderToWorldTexture ( shader, "radardisc" )
-	else
-		outputChatBox("Could not load test shader")
+	local shader_table = {}
+	for i=1, 10 do
+		shader_table[i] = {}
+		shader_table[i].texture = dxCreateTexture("sattelite_7_2.jpeg")
+		shader_table[i].shader, shader_table[i].tec = dxCreateShader( "fx/radar_mask.fx", 0,0,false,"all")
+		shader_table[i].x = i - 1
+		shader_table[i].y = 0
+		
+		dxSetShaderValue( shader_table[i].shader, "uCustomRadarTexturePart", shader_table[i].texture)
+		dxSetShaderValue( shader_table[i].shader, "uScreenWidth", scx)
+		dxSetShaderValue( shader_table[i].shader, "uScreenHeight", scy)
+		engineApplyShaderToWorldTexture ( shader_table[i].shader, "radardisc" )
 	end
+
+	local world_units_per_texture = 100
+	local map_x, map_y = 0,0
+	local player_x, player_y = 5,5
+	
+	local grid_x = math.floor((player_x - map_x) / world_units_per_texture)
+	local grid_y = math.floor((player_y - map_y) / world_units_per_texture)
+	
+	for i=1, #shader_table do
+		if(math.abs(shader_table[i].x - grid_x) <= 0 and math.abs(shader_table[i].y - grid_y)) then
+			engineApplyShaderToWorldTexture( shader_table[i].shader, "radardisc" )
+		else
+			engineRemoveShaderFromWorldTexture( shader_table[i].shader, "radardisc" )
+		end
+	end	
 end
 
 addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource()), test)

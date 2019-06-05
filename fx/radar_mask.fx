@@ -2,97 +2,20 @@
 // radar_mask.fx
 //
 
-float2 uUVPrePosition = float2( 0, 0 );
-float2 uUVScale = float( 1 );                     // UV scale
-float2 uUVScaleCenter = float2( 0.5, 0.5 );
-float  uUVRotAngle = float( 0 );                   // UV Rotation
-float2 uUVRotCenter = float2( 0.5, 0.5 );
-float2 uUVPosition = float2( 0, 0 );              // UV position
-
 texture uCustomRadarTexturePart;
+
 float uScreenHeight = 0;
 float uScreenWidth = 0;
 
+//Set these parameters with lua.
+float uUVRotation = 0;
+float2 uUVPosition = float2(0,0);
+
 #include "mta-helper.fx"
 
-//-------------------------------------------
-// Returns a translation matrix
-//-------------------------------------------
-float3x3 makeTranslationMatrix ( float2 pos )
-{
-    return float3x3(
-                    1, 0, 0,
-                    0, 1, 0,
-                    pos.x, pos.y, 1
-                    );
-}
-
-
-//-------------------------------------------
-// Returns a rotation matrix
-//-------------------------------------------
-float3x3 makeRotationMatrix ( float angle )
-{
-    float s = sin(angle);
-    float c = cos(angle);
-    return float3x3(
-                    c, s, 0,
-                    -s, c, 0,
-                    0, 0, 1
-                    );
-}
-
-
-//-------------------------------------------
-// Returns a scale matrix
-//-------------------------------------------
-float3x3 makeScaleMatrix ( float2 scale )
-{
-    return float3x3(
-                    scale.x, 0, 0,
-                    0, scale.y, 0,
-                    0, 0, 1
-                    );
-}
-
-
-//-------------------------------------------
-// Returns a combined matrix of doom
-//-------------------------------------------
-float3x3 makeTextureTransform ( float2 prePosition, float2 scale, float2 scaleCenter, float rotAngle, float2 rotCenter, float2 postPosition )
-{
-    float3x3 matPrePosition = makeTranslationMatrix( prePosition );
-    float3x3 matToScaleCen = makeTranslationMatrix( -scaleCenter );
-    float3x3 matScale = makeScaleMatrix( scale );
-    float3x3 matFromScaleCen = makeTranslationMatrix( scaleCenter );
-    float3x3 matToRotCen = makeTranslationMatrix( -rotCenter );
-    float3x3 matRot = makeRotationMatrix( rotAngle );
-    float3x3 matFromRotCen = makeTranslationMatrix( rotCenter );
-    float3x3 matPostPosition = makeTranslationMatrix( postPosition );
-
-    float3x3 result =
-                    mul(
-                    mul(
-                    mul(
-                    mul(
-                    mul(
-                    mul(
-                    mul(
-                        matPrePosition
-                        ,matToScaleCen)
-                        ,matScale)
-                        ,matFromScaleCen)
-                        ,matToRotCen)
-                        ,matRot)
-                        ,matFromRotCen)
-                        ,matPostPosition)
-                    ;
-    return result;
-}
-
+// Returns 1 if point is inside ellipse, 0 otherwise.
 float InsideEllipse(float center_x, float center_y, float el_width, float el_height, float x, float y){
-	float result = (pow((x - center_x),2) / pow(el_width,2)) + (pow((y - center_y),2) / pow(el_height,2));
-	return result;
+    return floor((pow((x - center_x),2) / pow(el_width,2)) + (pow((y - center_y),2) / pow(el_height,2)));
 }
 
 //---------------------------------------------------------------------
@@ -101,6 +24,10 @@ float InsideEllipse(float center_x, float center_y, float el_width, float el_hei
 sampler Sampler0 = sampler_state
 {
     Texture = (gTexture0);
+	MinFilter = Linear;
+    MagFilter = Linear;
+    AddressU = Clamp; //Clamp so no tiling.
+    AddressV = Clamp;
 };
 
 //---------------------------------------------------------------------
@@ -122,9 +49,7 @@ sampler Sampler1 = sampler_state
 struct VSInput
 {
   float3 Position : POSITION0;
-  float3 Normal : NORMAL0;
   float4 Diffuse : COLOR0;
-  float2 TexCoord : TEXCOORD0;
 };
 
 //---------------------------------------------------------------------
@@ -135,6 +60,7 @@ struct PSInput
   float4 Position : POSITION0;
   float4 Diffuse : COLOR0;
   float2 TexCoord : TEXCOORD0;
+  float2 ScreenPosition : SV_POSITION;
 };
 
 PSInput VertexShaderFunction(VSInput VS)
@@ -143,8 +69,6 @@ PSInput VertexShaderFunction(VSInput VS)
 	
     PS.Position = MTACalcScreenPosition(VS.Position);
 
-    PS.TexCoord = VS.TexCoord;
-
     PS.Diffuse = VS.Diffuse;
 	
     return PS;
@@ -152,29 +76,26 @@ PSInput VertexShaderFunction(VSInput VS)
 
 float4 PixelShaderFunction(PSInput PS) : COLOR0
 {
-	float4 finalColor = tex2D(Sampler0, PS.TexCoord.xy);
+	//Check if we are in the mask area.
+    float inEllipse = InsideEllipse(0.5,0.5,0.85,0.85, PS.TexCoord.x - 0.5, PS.TexCoord.y - 0.5);
 	
-	if (InsideEllipse(0.5,0.5,1 - 0.15,1 - 0.15, PS.TexCoord.x - 0.5, PS.TexCoord.y - 0.5) <= 1.1){
-		finalColor = tex2D(Sampler1, PS.TexCoord);
-	}
-    return finalColor;
+	//Normalize based on screen size.
+    PS.ScreenPosition.x /= uScreenWidth;
+    PS.ScreenPosition.y /= uScreenHeight;
+	
+	//Apply transforms.
+    PS.ScreenPosition = rotate(PS.ScreenPosition,rot);
+    PS.ScreenPosition += uvOffset;
+    
+	//Sample default texture at normal texture coordinates.
+    float4 finalColor = tex2D(Sampler0, PS.TexCoord);
+	
+	//Sample based on screen position.
+    float4 maskColor = tex2D(Sampler0, PS.ScreenPosition);
+    
+	//Combine texture colors.
+    return finalColor * (inEllipse ? 1:0) + maskColor * (inEllipse ? 0:1);
 }
-
-//-------------------------------------------
-// Returns UV anim transform
-//-------------------------------------------
-float3x3 getTextureTransform ()
-{
-    float posU = -fmod( gTime/8 ,1 );    // Scroll Right
-    float posV = 0;
-
-    return float3x3(
-                    1, 0, 0,
-                    0, 1, 0,
-                    posU, posV, 1
-                    );
-}
-
 
 technique tec0
 {
