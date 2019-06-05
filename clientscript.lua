@@ -67,9 +67,9 @@ addEventHandler( "onClientRender", root,
    end
 )
 
+local shader_table = {}
 
 function test()
-	local shader_table = {}
 	for i=1, 10 do
 		shader_table[i] = {}
 		shader_table[i].texture = dxCreateTexture("sattelite_7_2.jpeg")
@@ -77,10 +77,12 @@ function test()
 		shader_table[i].x = i - 1
 		shader_table[i].y = 0
 		
+		if(shader_table[i].shader) then
 		dxSetShaderValue( shader_table[i].shader, "uCustomRadarTexturePart", shader_table[i].texture)
 		dxSetShaderValue( shader_table[i].shader, "uScreenWidth", scx)
 		dxSetShaderValue( shader_table[i].shader, "uScreenHeight", scy)
 		engineApplyShaderToWorldTexture ( shader_table[i].shader, "radardisc" )
+		end
 	end
 
 	local world_units_per_texture = 100
@@ -94,9 +96,20 @@ function test()
 		if(math.abs(shader_table[i].x - grid_x) <= 0 and math.abs(shader_table[i].y - grid_y)) then
 			engineApplyShaderToWorldTexture( shader_table[i].shader, "radardisc" )
 		else
-			engineRemoveShaderFromWorldTexture( shader_table[i].shader, "radardisc" )
+			--engineRemoveShaderFromWorldTexture( shader_table[i].shader, "radardisc" )
 		end
 	end	
 end
+
+addEventHandler( "onClientRender", root,
+    function()
+		if(isCursorShowing()) then
+			local screenx, screeny, worldx, worldy, worldz = getCursorPosition()
+			for i=1, #shader_table do
+				dxSetShaderValue( shader_table[i].shader, "uUVPosition", {screenx, -screeny})
+			end	
+		end
+	end
+)
 
 addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource()), test)

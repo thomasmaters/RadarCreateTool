@@ -9,13 +9,25 @@ float uScreenWidth = 0;
 
 //Set these parameters with lua.
 float uUVRotation = 0;
-float2 uUVPosition = float2(0,0);
+float2 uUVPosition = float2(0.1,0.9);
 
 #include "mta-helper.fx"
 
 // Returns 1 if point is inside ellipse, 0 otherwise.
 float InsideEllipse(float center_x, float center_y, float el_width, float el_height, float x, float y){
     return floor((pow((x - center_x),2) / pow(el_width,2)) + (pow((y - center_y),2) / pow(el_height,2)));
+}
+
+float2 rotate(float2 pos, float rotation){
+	float c = cos(rotation);
+	float s = sin(rotation);
+	float2x2 m = float2x2(c,-s,s,c);
+	return mul(m,pos);
+}
+
+float2 scale(float2 pos, float scale){
+	float2x2 m = float2x2(scale,0,0,scale);
+	return mul(m,pos);
 }
 
 //---------------------------------------------------------------------
@@ -49,7 +61,9 @@ sampler Sampler1 = sampler_state
 struct VSInput
 {
   float3 Position : POSITION0;
+  float3 Normal : NORMAL0;
   float4 Diffuse : COLOR0;
+  float2 TexCoord : TEXCOORD0;
 };
 
 //---------------------------------------------------------------------
@@ -57,11 +71,12 @@ struct VSInput
 //---------------------------------------------------------------------
 struct PSInput
 {
-  float4 Position : POSITION0;
   float4 Diffuse : COLOR0;
   float2 TexCoord : TEXCOORD0;
-  float2 ScreenPosition : SV_POSITION;
+  float4 Position : POSITION1;
+  float4 kaas : SV_POSITION;
 };
+
 
 PSInput VertexShaderFunction(VSInput VS)
 {
@@ -76,33 +91,33 @@ PSInput VertexShaderFunction(VSInput VS)
 
 float4 PixelShaderFunction(PSInput PS) : COLOR0
 {
+	float2 ScreenPosition = PS.kaas.xy;
 	//Check if we are in the mask area.
-    float inEllipse = InsideEllipse(0.5,0.5,0.85,0.85, PS.TexCoord.x - 0.5, PS.TexCoord.y - 0.5);
+    float inEllipse = InsideEllipse(0.5,0.5,0.89,0.89, PS.TexCoord.x - 0.5, PS.TexCoord.y - 0.5);
 	
 	//Normalize based on screen size.
-    PS.ScreenPosition.x /= uScreenWidth;
-    PS.ScreenPosition.y /= uScreenHeight;
+    ScreenPosition.x /= uScreenWidth;
+    ScreenPosition.y /= uScreenHeight;
 	
 	//Apply transforms.
-    PS.ScreenPosition = rotate(PS.ScreenPosition,rot);
-    PS.ScreenPosition += uvOffset;
+    //ScreenPosition = rotate(ScreenPosition,uUVRotation);
+    ScreenPosition += uUVPosition;
     
 	//Sample default texture at normal texture coordinates.
     float4 finalColor = tex2D(Sampler0, PS.TexCoord);
 	
 	//Sample based on screen position.
-    float4 maskColor = tex2D(Sampler0, PS.ScreenPosition);
+    float4 maskColor = tex2D(Sampler1, scale(ScreenPosition, 4));
     
-	//Combine texture colors.
-    return finalColor * (inEllipse ? 1:0) + maskColor * (inEllipse ? 0:1);
+	return finalColor * (inEllipse ? 1:0) + maskColor * (inEllipse ? 0:1);
 }
 
 technique tec0
 {
     pass P1
     {
-        VertexShader = compile vs_2_0 VertexShaderFunction();
-		PixelShader  = compile ps_2_0 PixelShaderFunction();
+        //VertexShader = compile vs_3_0 VertexShaderFunction();
+		PixelShader  = compile ps_3_0 PixelShaderFunction();
     }
 }
 
