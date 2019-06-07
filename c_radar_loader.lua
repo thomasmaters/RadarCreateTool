@@ -98,6 +98,6 @@ end
 addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource()), 
   function()
     --Initalize instance
-    local instance = RadarLoader()
+    --local instance = RadarLoader()
   end
 )

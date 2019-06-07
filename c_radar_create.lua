@@ -105,11 +105,12 @@ function RadarCreate:startMapMaking()
         
         current_b = 0
         end
-      end,500,1)
+      end,750,1)
     end,1000,self.maxColumns * self.maxRows)
 end
 
 function RadarCreate:mapMakingFinished()
+  self:writeOutput()
   --Update the UI.
   GlobalUI:mapMakingFinished() 
 end
@@ -184,8 +185,8 @@ function RadarCreate:grabScreenPixels(current_b, current_l)
   
   --Safe smaller textures to a file if we want to.
   if(self.saveRadarParts) then
-    local radar_part_file = File.new(string.format("radar/radar_%d_%d.jpeg", current_b, current_l))
-    local radar_part_texture = dxCreateTexture(SCREEN_CAPTURE_SIZE, SCREEN_CAPTURE_SIZE)
+    local radar_part_file = File(string.format("output/radar/radar_%d_%d.jpeg", current_b, current_l))
+    local radar_part_texture = dxCreateTexture(screen_part)
     self:savePicture(radar_part_texture, radar_part_file)
   end
   
@@ -205,7 +206,7 @@ end
 
 function RadarCreate:savePicture(texture, file)
   if(file == nil) then
-	  outputChatBox("No file specified")
+	outputChatBox("No file specified")
     file = fileCreate("unnamed_image_"..getTickCount()..".jpeg")
   end
   local pixels_to_file = dxConvertPixels(dxGetTexturePixels(texture),"jpeg")
@@ -238,14 +239,14 @@ function RadarCreate:drawInWorld()
   local start_x, start_y = self.bottomLeftCoordinate.x, self.bottomLeftCoordinate.y
   
   --Draw vertical lines.
-  for i=0, self.maxRows do
+  --[[for i=0, self.maxRows do
 	  for j=0, self.maxColumns do
 	    --TODO do we need to flip the i and the j in this loop?
       local x = start_x + i * x_step 
       local y = start_y + j * y_step
       dxDrawLine3D(x, y, z - VISUALIZE_Z_OFFSET, x, y, z + VISUALIZE_Z_OFFSET, tocolor ( 0, 255, 0, 230 ), 500)
     end
-  end
+  end]]
   
   --Draw horizontal lines.
   --[[for i=0, self.maxRows - 1 do
@@ -272,4 +273,52 @@ function RadarCreate:getPixelsPerWorldUnit()
     local y_pixels_world_unit = (2 * CALIBRATION_OFFSET) / y_pixel_offset
 	
 	return x_pixels_world_unit, y_pixels_world_unit
+end
+
+function RadarCreate:writeOutput()
+  local templateFile = File("c_radar_loader.lua")
+  local destinationFile = File("output/c_radar_loader.lua")
+  local destinationConfigFile = XML("output/meta_xml.xml", "copy_between_these_tags_to_your_maps_meta_xml")
+  
+  if(not(templateFile and destinationFile and destinationConfigFile)) then
+    outputChatBox("File creation failed while exporting")
+    return
+  end
+  
+  --Write client rendering script
+  local templateFileData = templateFile:read(templateFile:getSize())
+  templateFileData = string.gsub(templateFileData, "self.maxRows = 0", string.format("self.maxRows = %d", self.maxRows))
+  templateFileData = string.gsub(templateFileData, "self.maxColumns = 0", string.format("self.maxColumns = %d", self.maxColumns))
+  templateFileData = string.gsub(templateFileData, "self.topLeftX = 0", string.format("self.topLeftX = %f",self.bottomLeftCoordinate.x))
+  templateFileData = string.gsub(templateFileData, "self.topLeftY = 0", string.format("self.topLeftY = %f",self.topRightCoordinate.y))
+  templateFileData = string.gsub(templateFileData, "self.radarTextureWidth = 0", string.format("self.radarTextureWidth = %d",SCREEN_CAPTURE_SIZE))
+  templateFileData = string.gsub(templateFileData, "self.radarTextureHeight = 0", string.format("self.radarTextureHeight = %d",SCREEN_CAPTURE_SIZE))
+  templateFileData = string.gsub(templateFileData, "self.pixelsPerWorldUnit = 0", string.format("self.pixelsPerWorldUnit = %f", self.xPixelsPerWorldUnit))
+  
+  
+  --Write xml that can be copied to a meta.xml
+  for i=0, GlobalRadarCreate.maxRows - 1 do
+    for j=0, GlobalRadarCreate.maxColumns - 1 do
+      local radarPartXmlNode = destinationConfigFile:createChild("file")
+      radarPartXmlNode:setAttribute("src",string.format("radar/radar_%d_%d.jpeg",j,i))
+    end
+  end
+  local radarScriptXmlNode = destinationConfigFile:createChild("script")
+  radarScriptXmlNode:setAttribute("src","c_radar_loader.lua")
+  radarScriptXmlNode:setAttribute("type","client")
+  
+  local radarShaderXmlNode = destinationConfigFile:createChild("script")
+  radarShaderXmlNode:setAttribute("src","fx/radar_mask.fx")
+  radarShaderXmlNode:setAttribute("type","client")
+  
+  --Close xml file
+  destinationConfigFile:saveFile()
+  destinationConfigFile:unload()
+  
+  --Close script file
+  destinationFile:write(templateFileData)
+  destinationFile:close()
+  
+  --Close template file
+  templateFile:close()
 end

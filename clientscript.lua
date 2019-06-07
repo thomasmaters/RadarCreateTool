@@ -44,6 +44,10 @@ addEventHandler( "onClientRender", root,
 		dxDrawText(string.format("x: %.4f\ny: %.4f", x_pixels_world_unit, y_pixels_world_unit),500, 300)
 		
 		if(GlobalRadarCreate.outputTexture and GlobalRadarCreate.maxRows ~= 0 and GlobalRadarCreate.maxColumns ~= 0) then
+			local guiMainWindowWidth, _ = GlobalUI.mainWindow:getSize(false)
+			RADAR_PREVIEW_WIDTH = GlobalRadarCreate.maxColumns / GlobalRadarCreate.maxRows * RADAR_PREVIEW_HEIGHT
+			RADAR_PREVIEW_X, RADAR_PREVIEW_Y = GlobalUI.mainWindow:getPosition(false)
+			RADAR_PREVIEW_X = RADAR_PREVIEW_X + guiMainWindowWidth
 		  dxDrawImage(RADAR_PREVIEW_X,RADAR_PREVIEW_Y,RADAR_PREVIEW_WIDTH,RADAR_PREVIEW_HEIGHT,GlobalRadarCreate.outputTexture)
 		  for i=0, GlobalRadarCreate.maxRows do
 		  	dxDrawLine(
@@ -66,54 +70,6 @@ addEventHandler( "onClientRender", root,
 		--setElementRotation(getCamera(),270,0,0)
    end
 )
-
-function writeOutput()
-  local templateFile = File("c_radar_loader.lua")
-  local destinationFile = File("output/c_radar_loader.lua")
-  local destinationConfigFile = XML("output/meta_xml.xml", "copy_between_these_tags_to_your_maps_meta_xml")
-  
-  if(not(templateFile and destinationFile and destinationConfigFile)) then
-    outputChatBox("File creation failed while exporting")
-    return
-  end
-  
-  --Write client rendering script
-  local templateFileData = templateFile:read(templateFile:getSize())
-  templateFileData = string.gsub(templateFileData, "self.maxRows = 0", string.format("self.maxRows = %d", 1))
-  templateFileData = string.gsub(templateFileData, "self.maxColumns = 0", string.format("self.maxColumns = %d", 1))
-  templateFileData = string.gsub(templateFileData, "self.topLeftX = 0", string.format("self.topLeftX = %f",1.0))
-  templateFileData = string.gsub(templateFileData, "self.topLeftY = 0", string.format("self.topLeftY = %f",1.0))
-  templateFileData = string.gsub(templateFileData, "self.radarTextureWidth = 0", string.format("self.radarTextureWidth = %d",1))
-  templateFileData = string.gsub(templateFileData, "self.radarTextureHeight = 0", string.format("self.radarTextureHeight = %d",1))
-  templateFileData = string.gsub(templateFileData, "self.pixelsPerWorldUnit = 0", string.format("self.pixelsPerWorldUnit = %f",1.0))
-  
-  
-  --Write xml that can be copied to a meta.xml
-  for i=0, GlobalRadarCreate.maxRows do
-    for j=0, GlobalRadarCreate.maxColumns do
-      local radarPartXmlNode = destinationConfigFile:createChild("file")
-      radarPartXmlNode:setAttribute("src",string.format("radar/radar_%d_%d.jpeg",j,i))
-    end
-  end
-  local radarScriptXmlNode = destinationConfigFile:createChild("script")
-  radarScriptXmlNode:setAttribute("src","c_radar_loader.lua")
-  radarScriptXmlNode:setAttribute("type","client")
-  
-  local radarShaderXmlNode = destinationConfigFile:createChild("script")
-  radarShaderXmlNode:setAttribute("src","fx/radar_mask.fx")
-  radarShaderXmlNode:setAttribute("type","client")
-  
-  --Close xml file
-  destinationConfigFile:saveFile()
-  destinationConfigFile:unload()
-  
-  --Close script file
-  destinationFile:write(templateFileData)
-  destinationFile:close()
-  
-  --Close template file
-  templateFile:close()
-end
 
 
 
