@@ -95,7 +95,7 @@ function RadarCreate:startMapMaking()
         
         if (current_l == self.maxRows and current_b == self.maxColumns) then
           --TODO will keyword 'local' here not lose its resources when passed to a function?
-          local new_radar_map_file = fileCreate("gta_radar_"..getTickCount()..".jpeg")
+          local new_radar_map_file = fileCreate("output/radar_" ..getTickCount().. ".jpeg")
           --Save outputTexture to file.
           self:savePicture(self.outputTexture, new_radar_map_file)
           
@@ -184,7 +184,7 @@ function RadarCreate:grabScreenPixels(current_b, current_l)
   
   --Safe smaller textures to a file if we want to.
   if(self.saveRadarParts) then
-    local radar_part_file = File.new(string.format("radar/gta_radar_%d_%d.jpeg", current_b, current_l))
+    local radar_part_file = File.new(string.format("radar/radar_%d_%d.jpeg", current_b, current_l))
     local radar_part_texture = dxCreateTexture(SCREEN_CAPTURE_SIZE, SCREEN_CAPTURE_SIZE)
     self:savePicture(radar_part_texture, radar_part_file)
   end

@@ -67,49 +67,57 @@ addEventHandler( "onClientRender", root,
    end
 )
 
-local shader_table = {}
-
-function test()
-	for i=1, 10 do
-		shader_table[i] = {}
-		shader_table[i].texture = dxCreateTexture("sattelite_7_2.jpeg")
-		shader_table[i].shader, shader_table[i].tec = dxCreateShader( "fx/radar_mask.fx", 0,0,false,"all")
-		shader_table[i].x = i - 1
-		shader_table[i].y = 0
-		
-		if(shader_table[i].shader) then
-		dxSetShaderValue( shader_table[i].shader, "uCustomRadarTexturePart", shader_table[i].texture)
-		dxSetShaderValue( shader_table[i].shader, "uScreenWidth", scx)
-		dxSetShaderValue( shader_table[i].shader, "uScreenHeight", scy)
-		engineApplyShaderToWorldTexture ( shader_table[i].shader, "radardisc" )
-		end
-	end
-
-	local world_units_per_texture = 100
-	local map_x, map_y = 0,0
-	local player_x, player_y = 5,5
-	
-	local grid_x = math.floor((player_x - map_x) / world_units_per_texture)
-	local grid_y = math.floor((player_y - map_y) / world_units_per_texture)
-	
-	for i=1, #shader_table do
-		if(math.abs(shader_table[i].x - grid_x) <= 0 and math.abs(shader_table[i].y - grid_y)) then
-			engineApplyShaderToWorldTexture( shader_table[i].shader, "radardisc" )
-		else
-			--engineRemoveShaderFromWorldTexture( shader_table[i].shader, "radardisc" )
-		end
-	end	
+function writeOutput()
+  local templateFile = File("c_radar_loader.lua")
+  local destinationFile = File("output/c_radar_loader.lua")
+  local destinationConfigFile = XML("output/meta_xml.xml", "copy_between_these_tags_to_your_maps_meta_xml")
+  
+  if(not(templateFile and destinationFile and destinationConfigFile)) then
+    outputChatBox("File creation failed while exporting")
+    return
+  end
+  
+  --Write client rendering script
+  local templateFileData = templateFile:read(templateFile:getSize())
+  templateFileData = string.gsub(templateFileData, "self.maxRows = 0", string.format("self.maxRows = %d", 1))
+  templateFileData = string.gsub(templateFileData, "self.maxColumns = 0", string.format("self.maxColumns = %d", 1))
+  templateFileData = string.gsub(templateFileData, "self.topLeftX = 0", string.format("self.topLeftX = %f",1.0))
+  templateFileData = string.gsub(templateFileData, "self.topLeftY = 0", string.format("self.topLeftY = %f",1.0))
+  templateFileData = string.gsub(templateFileData, "self.radarTextureWidth = 0", string.format("self.radarTextureWidth = %d",1))
+  templateFileData = string.gsub(templateFileData, "self.radarTextureHeight = 0", string.format("self.radarTextureHeight = %d",1))
+  templateFileData = string.gsub(templateFileData, "self.pixelsPerWorldUnit = 0", string.format("self.pixelsPerWorldUnit = %f",1.0))
+  
+  
+  --Write xml that can be copied to a meta.xml
+  for i=0, GlobalRadarCreate.maxRows do
+    for j=0, GlobalRadarCreate.maxColumns do
+      local radarPartXmlNode = destinationConfigFile:createChild("file")
+      radarPartXmlNode:setAttribute("src",string.format("radar/radar_%d_%d.jpeg",j,i))
+    end
+  end
+  local radarScriptXmlNode = destinationConfigFile:createChild("script")
+  radarScriptXmlNode:setAttribute("src","c_radar_loader.lua")
+  radarScriptXmlNode:setAttribute("type","client")
+  
+  local radarShaderXmlNode = destinationConfigFile:createChild("script")
+  radarShaderXmlNode:setAttribute("src","fx/radar_mask.fx")
+  radarShaderXmlNode:setAttribute("type","client")
+  
+  --Close xml file
+  destinationConfigFile:saveFile()
+  destinationConfigFile:unload()
+  
+  --Close script file
+  destinationFile:write(templateFileData)
+  destinationFile:close()
+  
+  --Close template file
+  templateFile:close()
 end
 
-addEventHandler( "onClientRender", root,
-    function()
-		if(isCursorShowing()) then
-			local screenx, screeny, worldx, worldy, worldz = getCursorPosition()
-			for i=1, #shader_table do
-				dxSetShaderValue( shader_table[i].shader, "uUVPosition", {screenx, -screeny})
-			end	
-		end
-	end
-)
 
-addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource()), test)
+
+
+
+
+

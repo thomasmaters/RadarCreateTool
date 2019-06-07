@@ -1,6 +1,7 @@
 <meta>
 <oop>true</oop>
 	<file src="sattelite_7_2.jpeg"/>
+	<file src="c_radar_loader.lua"/>
 	<script src="matrix.lua" type="client" />
 	<script src="inheritance.lua" type="client" />
 	<script src="c_shader.lua" type="client" />
@@ -8,6 +9,7 @@
     <script src="clientscript.lua" type="client" />
 	<script src="radar.lua" type="client" />
 	<script src="c_radar_create.lua" type="client" />
+	<script src="c_radar_loader.lua" type="client" />
 	<script src="c_main.lua" type="client" />
     <file src="fx/clientshader.fx" type="client" />
 	<file src="fx/mta-helper.fx" type="client" />
