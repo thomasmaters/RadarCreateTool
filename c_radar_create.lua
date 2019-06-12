@@ -297,19 +297,25 @@ function RadarCreate:writeOutput()
   
   
   --Write xml that can be copied to a meta.xml
+  local oopXmlNode = destinationConfigFile:createChild("oop")
+  oopXmlNode:setValue("true")
+  
   for i=0, GlobalRadarCreate.maxRows - 1 do
     for j=0, GlobalRadarCreate.maxColumns - 1 do
       local radarPartXmlNode = destinationConfigFile:createChild("file")
       radarPartXmlNode:setAttribute("src",string.format("radar/radar_%d_%d.jpeg",j,i))
     end
   end
+  
+  local radarShaderXmlNode = destinationConfigFile:createChild("file")
+  radarShaderXmlNode:setAttribute("src","fx/radar_mask.fx")
+  radarShaderXmlNode:setAttribute("type","client")
+  
   local radarScriptXmlNode = destinationConfigFile:createChild("script")
   radarScriptXmlNode:setAttribute("src","c_radar_loader.lua")
   radarScriptXmlNode:setAttribute("type","client")
   
-  local radarShaderXmlNode = destinationConfigFile:createChild("script")
-  radarShaderXmlNode:setAttribute("src","fx/radar_mask.fx")
-  radarShaderXmlNode:setAttribute("type","client")
+  File.copy("fx/radar_mask.fx", "output/fx/radar_mask.fx")
   
   --Close xml file
   destinationConfigFile:saveFile()

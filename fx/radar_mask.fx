@@ -9,7 +9,7 @@ float uScreenWidth = 0;
 
 //Set these parameters with lua.
 float uUVRotation = 0;
-float2 uUVPosition = float2(0.1,0.9);
+float2 uUVPosition = float2(0.0,0.0);
 
 #include "mta-helper.fx"
 
@@ -91,7 +91,7 @@ PSInput VertexShaderFunction(VSInput VS)
 
 float4 PixelShaderFunction(PSInput PS) : COLOR0
 {
-	float2 ScreenPosition = PS.kaas.xy;
+	float2 ScreenPosition = PS.kaas.xy; //These coordinates are in range 0 to screen size.
 	//Check if we are in the mask area.
     float inEllipse = InsideEllipse(0.5,0.5,0.89,0.89, PS.TexCoord.x - 0.5, PS.TexCoord.y - 0.5);
 	
@@ -99,17 +99,26 @@ float4 PixelShaderFunction(PSInput PS) : COLOR0
     ScreenPosition.x /= uScreenWidth;
     ScreenPosition.y /= uScreenHeight;
 	
+	ScreenPosition.x = MTAUnlerp(0.056, 0.196625,ScreenPosition.x);
+	ScreenPosition.y = MTAUnlerp(0.679, 0.929,ScreenPosition.y);
+	
+	//Size of radar is 0.25 * uScreenHeight
+	//if(ScreenPosition.x > (uScreenWidth * 0.056)){ //Top left corner or radar
+	//if(ScreenPosition.y > (uScreenHeight * 0.679)){
+	
 	//Apply transforms.
-    //ScreenPosition = rotate(ScreenPosition,uUVRotation);
     ScreenPosition += uUVPosition;
+	ScreenPosition -= float2(0.5,0.5);
+	ScreenPosition = rotate(ScreenPosition,uUVRotation);
+	ScreenPosition += float2(0.5,0.5);
     
 	//Sample default texture at normal texture coordinates.
     float4 finalColor = tex2D(Sampler0, PS.TexCoord);
 	
 	//Sample based on screen position.
-    float4 maskColor = tex2D(Sampler1, scale(ScreenPosition, 4));
-    
-	return finalColor * (inEllipse ? 1:0) + maskColor * (inEllipse ? 0:1);
+    float4 maskColor = tex2D(Sampler1, scale(ScreenPosition, 1));
+    return maskColor;
+	//return finalColor * (inEllipse ? 1:0) + maskColor * (inEllipse ? 0:1);
 }
 
 technique tec0

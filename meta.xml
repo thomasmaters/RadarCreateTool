@@ -1,5 +1,6 @@
 <meta>
 <oop>true</oop>
+	<file src="shadertest.jpg"/>
 	<file src="sattelite_7_2.jpeg"/>
 	<file src="c_radar_loader.lua"/>
 	<script src="matrix.lua" type="client" />

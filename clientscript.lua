@@ -71,7 +71,56 @@ addEventHandler( "onClientRender", root,
    end
 )
 
-
+addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource()), 
+  function()
+	local shaderTable = {}
+	local i = 1
+    --Calculate tile
+    local tileX, tileY = 0,0
+    --Load tile part.
+    local filePath = "shadertest.jpg"
+    
+    --Does it exist
+    if(File.exists(filePath)) then
+		outputChatBox("texture exists")
+      shaderTable[i] = {}
+      shaderTable[i].x = tileX
+      shaderTable[i].y = tileY
+      shaderTable[i].loaded = false
+      shaderTable[i].texture = dxCreateTexture(filePath)
+      shaderTable[i].shader, shaderTable[i].tec = dxCreateShader( "fx/radar_mask.fx", 0,0,false,"all")
+      
+      --Is the shader loaded?
+      if(shaderTable[i].shader) then
+		outputChatBox("shader loaded")
+        dxSetShaderValue( shaderTable[i].shader, "uCustomRadarTexturePart", shaderTable[i].texture)
+        dxSetShaderValue( shaderTable[i].shader, "uScreenWidth", SCREEN_WIDTH)
+        dxSetShaderValue( shaderTable[i].shader, "uScreenHeight", SCREEN_HEIGHT)
+		engineApplyShaderToWorldTexture( shaderTable[i].shader, "radardisc" )
+		dxSetShaderValue( shaderTable[i].shader, "uUVPosition", {-0.065,0})
+      end
+	  
+	  i = 2
+	  outputChatBox("texture exists")
+      shaderTable[i] = {}
+      shaderTable[i].x = tileX
+      shaderTable[i].y = tileY
+      shaderTable[i].loaded = false
+      shaderTable[i].texture = dxCreateTexture(filePath)
+      shaderTable[i].shader, shaderTable[i].tec = dxCreateShader( "fx/radar_mask.fx", 0,0,false,"all")
+      
+      --Is the shader loaded?
+      if(shaderTable[i].shader) then
+		outputChatBox("shader loaded")
+        dxSetShaderValue( shaderTable[i].shader, "uCustomRadarTexturePart", shaderTable[i].texture)
+        dxSetShaderValue( shaderTable[i].shader, "uScreenWidth", SCREEN_WIDTH)
+        dxSetShaderValue( shaderTable[i].shader, "uScreenHeight", SCREEN_HEIGHT)
+		--engineApplyShaderToWorldTexture( shaderTable[i].shader, "radardisc" )
+		--dxSetShaderValue( shaderTable[i].shader, "uUVPosition", {-0.565,0})
+      end
+    end
+  end
+)
 
 
 

@@ -10,14 +10,14 @@ setmetatable(RadarLoader, {
 
 function RadarLoader.new(init)
   local self = setmetatable({}, RadarLoader)
-  self.maxRows = 0
-  self.maxColumns = 0
+  self.maxRows = 1
+  self.maxColumns = 1
   
   self.topLeftX = 0
   self.topLeftY = 0
   
-  self.radarTextureWidth = 0
-  self.radarTextureHeight = 0
+  self.radarTextureWidth = 512
+  self.radarTextureHeight = 512
   
   self.pixelsPerWorldUnit = 0
   
@@ -25,7 +25,7 @@ function RadarLoader.new(init)
   
   self:populateShaderTable()
   
-  self.timer = setTimer ( function() self:handleTileLoading() end, 250, 0 )
+  self.timer = setTimer ( function() self:checkTileLoading() end, 250, 0 )
   addEventHandler( "onClientRender", getRootElement(),
     function()
       self:render()
@@ -39,7 +39,7 @@ function RadarLoader:populateShaderTable()
     --Calculate tile
     local tileX, tileY = (i - 1) % self.maxColumns, math.floor((i - 1) / self.maxRows)
     --Load tile part.
-    local filePath = string.format("radar/radar_%d_%d.jpeg",self.shaderTable[i].x,self.shaderTable[i].y)
+    local filePath = string.format("radar/radar_%d_%d.jpeg",tileX, tileY)
     
     --Does it exist
     if(File.exists(filePath)) then
@@ -51,7 +51,7 @@ function RadarLoader:populateShaderTable()
       self.shaderTable[i].shader, self.shaderTable[i].tec = dxCreateShader( "fx/radar_mask.fx", 0,0,false,"all")
       
       --Is the shader loaded?
-      if(shader_table[i].shader) then
+      if(self.shaderTable[i].shader) then
         dxSetShaderValue( self.shaderTable[i].shader, "uCustomRadarTexturePart", self.shaderTable[i].texture)
         dxSetShaderValue( self.shaderTable[i].shader, "uScreenWidth", SCREEN_WIDTH)
         dxSetShaderValue( self.shaderTable[i].shader, "uScreenHeight", SCREEN_HEIGHT)
@@ -61,10 +61,10 @@ function RadarLoader:populateShaderTable()
 end
 
 function RadarLoader:checkTileLoading()
-  local playerX, playerY, _ = localPlayer:getPosition()
+  local playerPos = localPlayer:getPosition()
   
-  local gridX = math.floor((playerX - self.topLeftX) / (self.pixelsPerWorldUnit * self.radarTextureWidth))
-  local gridY = math.floor((playerY - self.topLeftY) / (self.pixelsPerWorldUnit * self.radarTextureHeight))
+  local gridX = math.floor((playerPos.x - self.topLeftX) / (self.pixelsPerWorldUnit * self.radarTextureWidth))
+  local gridY = math.floor((playerPos.y - self.topLeftY) / (self.pixelsPerWorldUnit * self.radarTextureHeight))
   
   for _,shaderTableEntry in pairs(self.shaderTable) do
     if(shaderTableEntry.shader ~= nil and math.abs(shaderTableEntry.x - gridX) <= 0 and math.abs(shaderTableEntry.y - gridY)) then
@@ -78,19 +78,19 @@ function RadarLoader:checkTileLoading()
 end
 
 function RadarLoader:render()
-  local playerX, playerY, _ = localPlayer:getPosition()
-  local rotX, rotY, rotZ = localPlayer:getRotation()
+  local playerPos = localPlayer:getPosition()
+  local playerRot = localPlayer:getRotation()
   
   --Calculate grid position.
-  local uvX = (playerX - self.topLeftX) / (self.pixelsPerWorldUnit * self.radarTextureWidth)
-  local uvY = (playerY - self.topLeftY) / (self.pixelsPerWorldUnit * self.radarTextureHeight)
+  local uvX = (playerPos.x - self.topLeftX) / (self.pixelsPerWorldUnit * self.radarTextureWidth)
+  local uvY = (playerPos.y - self.topLeftY) / (self.pixelsPerWorldUnit * self.radarTextureHeight)
   for _,shaderTableEntry in pairs(self.shaderTable) do
     --Is shader loaded.
     if(shaderTableEntry.loaded) then
         --Set shader values on render.
         dxSetShaderValue( shaderTableEntry.shader, "uUVPosition", {uvX - shaderTableEntry.x, uvY - shaderTableEntry.y})
         --TODO is rotZ correct?
-        dxSetShaderValue( shaderTableEntry.shader, "uUVRotation", (rotZ * math.pi / 180))
+        dxSetShaderValue( shaderTableEntry.shader, "uUVRotation", (playerRot.z * math.pi / 180))
     end
   end
 end
