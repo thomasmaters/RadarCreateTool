@@ -99,8 +99,8 @@ float4 PixelShaderFunction(PSInput PS) : COLOR0
     ScreenPosition.x /= uScreenWidth;
     ScreenPosition.y /= uScreenHeight;
 	
-	ScreenPosition.x = MTAUnlerp(0.056, 0.196625,ScreenPosition.x);
-	ScreenPosition.y = MTAUnlerp(0.679, 0.929,ScreenPosition.y);
+	//ScreenPosition.x = MTAUnlerp(0.056, 0.216,ScreenPosition.x);
+	//ScreenPosition.y = MTAUnlerp(0.679, 0.929,ScreenPosition.y);
 	
 	//Size of radar is 0.25 * uScreenHeight
 	//if(ScreenPosition.x > (uScreenWidth * 0.056)){ //Top left corner or radar

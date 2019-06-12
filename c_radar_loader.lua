@@ -10,8 +10,8 @@ setmetatable(RadarLoader, {
 
 function RadarLoader.new(init)
   local self = setmetatable({}, RadarLoader)
-  self.maxRows = 1
-  self.maxColumns = 1
+  self.maxRows = 3
+  self.maxColumns = 3
   
   self.topLeftX = 0
   self.topLeftY = 0
@@ -19,7 +19,7 @@ function RadarLoader.new(init)
   self.radarTextureWidth = 512
   self.radarTextureHeight = 512
   
-  self.pixelsPerWorldUnit = 0
+  self.pixelsPerWorldUnit = 0.9
   
   self.gridPosX = nil
   self.gridPosY = nil
@@ -47,8 +47,9 @@ function RadarLoader:populateShaderTable()
     --Calculate tile
     local tileX, tileY = (i - 1) % self.maxColumns, math.floor((i - 1) / self.maxRows)
     --Load tile part.
-    local filePath = string.format("radar/radar_%d_%d.jpeg",tileX, tileY)
-    
+    --local filePath = string.format("radar/radar_%d_%d.jpeg",tileX, tileY)
+    local filePath = "shadertest.jpg"
+	
     --Does it exist
     if(File.exists(filePath)) then
       self.shaderTable[i] = {}
@@ -65,6 +66,7 @@ function RadarLoader:populateShaderTable()
     dxSetShaderValue( self.shader, "uCustomRadarTexturePart", self.radarTexture)
     dxSetShaderValue( self.shader, "uScreenWidth", SCREEN_WIDTH)
     dxSetShaderValue( self.shader, "uScreenHeight", SCREEN_HEIGHT)
+	engineApplyShaderToWorldTexture( self.shader, "radardisc" )
   end
 end
 
@@ -82,7 +84,7 @@ function RadarLoader:constructBigTexture()
   for _,shaderTableEntry in pairs(self.shaderTable) do
     if(math.abs(shaderTableEntry.x - gridX) <= radarBufferSize and math.abs(shaderTableEntry.y - gridY) <= radarBufferSize) then  
       self.radarTexture:setPixels(shaderTableEntry.pixels, 
-        (shaderTableEntry.x - gridX + radarBufferSize) * self.radarTextureWidth, 
+        (gridX - shaderTableEntry.x + radarBufferSize) * self.radarTextureWidth, 
         (shaderTableEntry.y - gridY + radarBufferSize) * self.radarTextureHeight,
         self.radarTextureWidth,
         self.radarTextureHeight)
@@ -101,27 +103,33 @@ function RadarLoader:checkTileLoading()
   
   if(gridX ~= self.gridPosX or gridY ~= self.gridPosY) then
     self:constructBigTexture()
+	self.gridPosX = gridX
+	self.gridPosY = gridY
+	outputChatBox("I am now in tile: " ..self.gridPosX.. " "..self.gridPosY)
   end
 end
 
 function RadarLoader:render()
+
+	dxDrawImage(0,512,512,512,self.radarTexture)
   local playerPos = localPlayer:getPosition()
   local playerRot = localPlayer:getRotation()
   
   --Calculate grid position.
   local uvX = (playerPos.x - self.topLeftX) / (self.pixelsPerWorldUnit * self.radarTextureWidth)
   local uvY = (playerPos.y - self.topLeftY) / (self.pixelsPerWorldUnit * self.radarTextureHeight)
-  if(self.shader) then
+  if(self.shader and self.gridPosX and self.gridPosY) then
     --Set shader values on render.
-    dxSetShaderValue( self.shader, "uUVPosition", {uvX - shaderTableEntry.x, uvY - shaderTableEntry.y})
+    --dxSetShaderValue( self.shader, "uUVPosition", {uvX, uvY})
     --TODO is rotZ correct?
-    dxSetShaderValue( self.shader, "uUVRotation", (playerRot.z * math.pi / 180))
+    dxSetShaderValue( self.shader, "uUVRotation", (-playerRot.z * math.pi / 180))
   end
 end
 
 addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource()), 
   function()
     --Initalize instance
-    --local instance = RadarLoader()
+	outputChatBox("kaas")
+    local instance = RadarLoader()
   end
 )

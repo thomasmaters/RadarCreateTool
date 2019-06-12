@@ -2,7 +2,7 @@
 <oop>true</oop>
 	<file src="shadertest.jpg"/>
 	<file src="sattelite_7_2.jpeg"/>
-	<file src="c_radar_loader.lua"/>
+	<script src="c_radar_loader.lua" type="client" />
 	<script src="matrix.lua" type="client" />
 	<script src="inheritance.lua" type="client" />
 	<script src="c_shader.lua" type="client" />
