@@ -142,19 +142,25 @@ end
 function RadarCreate:createOutputTexture()
   if(self.maxRows > 0 and self.maxColumns > 0) then
   
+    --Validate texture size constraints.
+    if(SCREEN_CAPTURE_SIZE * self.maxColumns > 16384 or SCREEN_CAPTURE_SIZE * self.maxRows > 16384) then
+      outputChatBox("Creating complete radar texture exceeds maximum texture size constraints, use the option 'enable radar parts' instead!")
+      return false
+    end
+  
     --Do we have a texture already?
     if(self.outputTexture == nil) then
     
       --Create a new texture.
       self.outputTexture = dxCreateTexture(SCREEN_CAPTURE_SIZE * self.maxColumns, SCREEN_CAPTURE_SIZE * self.maxRows)
-	  return true
+      return true
     else
       --If size doesn't match, make a new texture.
       local texture_x, texture_y = self.outputTexture:getSize()
       if((self.maxColumns * SCREEN_CAPTURE_SIZE) ~= texture_x or (self.maxRows * SCREEN_CAPTURE_SIZE) ~= texture_y ) then
         self.outputTexture = dxCreateTexture(SCREEN_CAPTURE_SIZE * self.maxColumns, SCREEN_CAPTURE_SIZE * self.maxRows)
       end
-	  return true
+	    return true
     end
   end
   return false

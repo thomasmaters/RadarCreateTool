@@ -122,7 +122,3 @@ addEventHandler("onClientResourceStart", getResourceRootElement(getThisResource(
   end
 )
 
-
-
-
-
