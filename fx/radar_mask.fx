@@ -96,8 +96,8 @@ float4 PixelShaderFunction(PSInput PS) : COLOR0
     float inEllipse = InsideEllipse(0.5,0.5,0.89,0.89, PS.TexCoord.x - 0.5, PS.TexCoord.y - 0.5);
 	
 	//Normalize based on screen size.
-    ScreenPosition.x /= uScreenWidth;
-    ScreenPosition.y /= uScreenHeight;
+    //ScreenPosition.x /= uScreenWidth;
+    //ScreenPosition.y /= uScreenHeight;
 	
 	//ScreenPosition.x = MTAUnlerp(0.056, 0.216,ScreenPosition.x);
 	//ScreenPosition.y = MTAUnlerp(0.679, 0.929,ScreenPosition.y);
@@ -107,16 +107,23 @@ float4 PixelShaderFunction(PSInput PS) : COLOR0
 	//if(ScreenPosition.y > (uScreenHeight * 0.679)){
 	
 	//Apply transforms.
-    ScreenPosition += uUVPosition;
-	ScreenPosition -= float2(0.5,0.5);
-	ScreenPosition = rotate(ScreenPosition,uUVRotation);
-	ScreenPosition += float2(0.5,0.5);
+	float2 centerOffRadarOnScreen = float2((0.056 + 0.075) * uScreenWidth, (0.679 + 0.075) * uScreenWidth);
+	float2 offsetCenterRadarToDrawPixel = float2(ScreenPosition.x - 0.056 * uScreenWidth,ScreenPosition.y - 0.679 * uScreenHeight);
+	float2 rotatedPixelToDraw = rotate(offsetCenterRadarToDrawPixel, uUVRotation);
+	rotatedPixelToDraw += float2(1536/2,1536/2);
+	rotatedPixelToDraw.x = MTAUnlerp(0.0, 1536, rotatedPixelToDraw.x);
+	rotatedPixelToDraw.y = MTAUnlerp(0.0, 1536, rotatedPixelToDraw.y);
+	
+	
+	//ScreenPosition +=  //Pos on screen
+	//ScreenPosition = rotate(ScreenPosition,uUVRotation);
+	//ScreenPosition -= float2(1536/2,1536/2); //Rotate around center of big texture //uUVPosition; //Rotate around point
     
 	//Sample default texture at normal texture coordinates.
     float4 finalColor = tex2D(Sampler0, PS.TexCoord);
 	
 	//Sample based on screen position.
-    float4 maskColor = tex2D(Sampler1, scale(ScreenPosition, 1));
+    float4 maskColor = tex2D(Sampler1, rotatedPixelToDraw);
     return maskColor;
 	//return finalColor * (inEllipse ? 1:0) + maskColor * (inEllipse ? 0:1);
 }
@@ -138,5 +145,35 @@ technique fallback
         // Just draw normally
     }
 }
+
+/*
+PS_OUTPUT ps_main(in PS_INPUT In)
+{
+    PS_OUTPUT Out;
+    
+    
+    //In.v_position.x /= 1920;
+    //In.v_position.y /= 1280;
+    //In.v_position = rotate(In.v_position,rot);
+    //In.v_position += uUVPosition;
+    float2 ScreenPosition = In.v_position;
+    
+    float2 centerOffRadarOnScreen = float2((0.056 + 0.075), (0.679 + 0.1));
+    float inEllipse = InsideEllipse(centerOffRadarOnScreen.x,centerOffRadarOnScreen.y,0.15,0.20, In.v_texcoord.x, In.v_texcoord.y);
+    
+    float2 offsetCenterRadarToDrawPixel = float2(ScreenPosition.x - (0.056 + 0.075) * uScreenWidth,ScreenPosition.y - (0.679 + 0.1) * uScreenHeight);
+    float2 rotatedPixelToDraw = rotate(offsetCenterRadarToDrawPixel, uUVRotation);
+    //rotatedPixelToDraw += float2(1536/2,1536/2);
+    rotatedPixelToDraw -= float2(uUVPosition.x * 1536,uUVPosition.y * 1536);
+    rotatedPixelToDraw.x = MTAUnlerp(0.0, 1536, rotatedPixelToDraw.x);
+    rotatedPixelToDraw.y = MTAUnlerp(0.0, 1536, rotatedPixelToDraw.y);
+    
+    float4 finalColor = tex2D(texture0, In.v_texcoord);
+    float4 maskColor = tex2D(texture1, rotatedPixelToDraw);
+    
+    Out.color = finalColor * (inEllipse ? 1:0) + maskColor * (inEllipse ? 0:1);
+    return Out;
+}
+*/
 
 
